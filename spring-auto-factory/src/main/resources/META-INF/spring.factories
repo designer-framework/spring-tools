@@ -1,0 +1,3 @@
+org.designer.di.strategy.NamingFinderStrategy=org.designer.di.strategy.impl.ThreadLocalNamingFinder
+org.designer.di.handler.InvokeHandler=org.designer.di.handler.impl.MatchInvokeHandler,\
+  org.designer.di.handler.impl.QuickInvokeHandler
