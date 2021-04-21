@@ -13,38 +13,22 @@ import java.util.concurrent.Callable;
  */
 @Getter
 @SuperBuilder
-public class Job<T> implements Callable<JobResult<T>> {
+public class Job<T> {
 
-    private final String jobName;
+    private final String jobId;
 
     private final LocalDateTime createTime;
 
     private final Callable<JobResult<T>> task;
 
-    public Job(Callable<JobResult<T>> task, String jobName) {
+    private final String batchId;
+
+    public Job(Callable<JobResult<T>> task, String jobId, String batchId) {
         super();
         this.task = task;
-        this.jobName = jobName;
+        this.jobId = jobId;
+        this.batchId = batchId;
         createTime = LocalDateTime.now();
-    }
-
-    @Override
-    public JobResult<T> call() throws Exception {
-        try {
-            return task.call();
-        } catch (Exception e) {
-            JobResult<T> tJobResult = new JobResult<>(jobName);
-            tJobResult.exception(e);
-            return tJobResult;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "Job{" +
-                "jobName='" + jobName + '\'' +
-                ", createTime=" + createTime +
-                '}';
     }
 
 }

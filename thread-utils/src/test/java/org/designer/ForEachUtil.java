@@ -6,6 +6,7 @@ import org.designer.thread.entity.Job;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 /**
@@ -30,12 +31,12 @@ public class ForEachUtil {
     }
 
     @SneakyThrows
-    public static List<Job<String>> listThread(int count, Job<String> tCallable) {
+    public static List<Job<String>> listThread(int count, Supplier<Job<String>> supplierCallable) {
         CountDownLatch countDownLatch = new CountDownLatch(count);
         List<Job<String>> threads = new ArrayList<>();
         IntStream.range(0, count)
                 .forEach(value -> {
-                    threads.add(tCallable);
+                    threads.add(supplierCallable.get());
                     countDownLatch.countDown();
                 });
         countDownLatch.await();

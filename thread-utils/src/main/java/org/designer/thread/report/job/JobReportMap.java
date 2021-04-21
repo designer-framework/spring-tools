@@ -1,22 +1,20 @@
-package org.designer.thread.report;
+package org.designer.thread.report.job;
 
 import org.springframework.util.LinkedMultiValueMap;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @description:
  * @author: Designer
  * @date : 2021/4/20 22:50
  */
-public class ReportMap<K, T> extends LinkedMultiValueMap<K, T> implements Report<K, T> {
+public class JobReportMap<K, T> extends LinkedMultiValueMap<K, T> {
 
     private static final long serialVersionUID = -4656831751786181978L;
 
-    @Override
-    public int getSizeByStatus(K jobStatus) {
-        return Objects.requireNonNull(get(jobStatus)).size();
+    public int getSizeByKey(K jobStatus) {
+        return get(jobStatus) != null ? get(jobStatus).size() : 0;
     }
 
     /**
