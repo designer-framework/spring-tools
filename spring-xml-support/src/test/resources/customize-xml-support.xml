@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:custom="http://www.springframework.org/schema/customize"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+										http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+										http://www.springframework.org/schema/context
+			  							http://www.springframework.org/schema/context/spring-context-4.0.xsd
+                                        http://www.springframework.org/schema/customize
+                                        http://www.springframework.org/schema/customize/spring-xml-support-4.0.xsd">
+
+
+    <context:component-scan base-package="org.designer"/>
+    <context:annotation-config/>
+
+    <!-- <bean class="cn.enjoy.spring.MyMapSon" id="myMapSon" destroy-method="(inferred)">
+         <lookup-method name="toString1" bean="str"/>
+         <property name="replaceMap" ref="replaceMap"/>
+         <constructor-arg name="replaceMap" ref="replaceMap"/>
+         &lt;!&ndash;<replaced-method name="toString1" replacer="replaceMap"/>&ndash;&gt;
+     </bean>-->
+
+    <custom:instance class-name="org.designer.xml.bean.XmlBean" id="xmlBean" arg1="1" arg2="2"/>
+
+    <bean class="java.lang.String" id="str1">
+        <constructor-arg index="0" type="java.lang.String" value="string xxx">
+        </constructor-arg>
+    </bean>
+
+</beans>
