@@ -1,9 +1,8 @@
 package org.designer.common.utils;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
-import org.designer.common.bean.ContextInfo;
+import org.designer.common.bean.AppContext;
 import org.designer.common.classload.AppClassloader;
 import org.springframework.core.io.ClassPathResource;
 
@@ -53,10 +52,10 @@ public class AppUtils {
         }).collect(Collectors.toList());
     }
 
-    public static void reflectInvokeApp(String clazz, ClassLoader classLoader, ContextInfo args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static void reflectInvokeApp(String clazz, ClassLoader classLoader, AppContext args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Class<?> loadClass = ((AppClassloader) classLoader).loadClass(clazz, true);
-        Method main = loadClass.getDeclaredMethod("main", String[].class);
-        main.invoke(loadClass, new Object[]{new String[]{JSON.toJSONString(args)}});
+        Method main = loadClass.getDeclaredMethod("start", AppContext.class);
+        main.invoke(loadClass, args);
     }
 
 }

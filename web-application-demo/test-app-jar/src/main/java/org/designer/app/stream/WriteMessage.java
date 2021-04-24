@@ -1,4 +1,4 @@
-package org.designer.common.stream;
+package  org.designer.app.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;

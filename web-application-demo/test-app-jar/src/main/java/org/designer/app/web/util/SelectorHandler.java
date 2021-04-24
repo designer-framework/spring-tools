@@ -1,7 +1,7 @@
-package org.designer.common.web.util;
+package  org.designer.app.web.util;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.common.stream.SocketMessageUtils;
+import org.designer.app.stream.SocketMessageUtils;
 
 import java.io.IOException;
 import java.net.Socket;

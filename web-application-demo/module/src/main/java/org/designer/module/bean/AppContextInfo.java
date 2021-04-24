@@ -1,8 +1,7 @@
-package org.designer.common.bean;
+package org.designer.module.bean;
 
 import lombok.Data;
-
-import java.io.Serializable;
+import org.designer.common.bean.AppContext;
 
 /**
  * @description:
@@ -10,7 +9,7 @@ import java.io.Serializable;
  * @date : 2021/4/23 23:56
  */
 @Data
-public class ContextInfo implements Serializable {
+public class AppContextInfo implements AppContext {
 
     private static final long serialVersionUID = 8071157237872656153L;
 
@@ -21,4 +20,5 @@ public class ContextInfo implements Serializable {
     private String version;
 
     private String appName;
+
 }

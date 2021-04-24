@@ -20,8 +20,8 @@
             <PatternLayout pattern="${log.pattern}"/>
         </Console>
 
-        <RollingFile name="PAYMENT_REQUEST_LOG"
-                     immediateFlush="true" fileName="${log.path}/payment-request.log"
+        <RollingFile name="APP_LOG"
+                     immediateFlush="true" fileName="${log.path}/app.log"
                      filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-payment-request-%d{yyyy-MM-dd}.log.gz">
             <PatternLayout>
                 <charset>${log.charset}</charset>
@@ -158,9 +158,9 @@
             <appender-ref ref="ERROR_APPENDER"/>
         </logger>
 
-        <logger name="PAYMENT_REQUEST" level="DEBUG" additivity="false" includeLocation="true">
+        <logger name="APP" level="DEBUG" additivity="false" includeLocation="true">
             <appender-ref ref="Console"/>
-            <appender-ref ref="PAYMENT_REQUEST_LOG"/>
+            <appender-ref ref="APP_LOG"/>
         </logger>
 
     </Loggers>

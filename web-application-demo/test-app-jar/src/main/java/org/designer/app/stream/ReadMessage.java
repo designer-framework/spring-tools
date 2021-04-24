@@ -1,4 +1,4 @@
-package org.designer.common.stream;
+package  org.designer.app.stream;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;

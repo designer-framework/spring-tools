@@ -11,14 +11,10 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>common</artifactId>
+    <artifactId>module-common</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
-        <dependency>
-            <groupId>org.designer</groupId>
-            <artifactId>module-common</artifactId>
-        </dependency>
     </dependencies>
 
 

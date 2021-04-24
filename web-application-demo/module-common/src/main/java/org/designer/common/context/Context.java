@@ -1,5 +1,7 @@
 package org.designer.common.context;
 
+import org.designer.common.bean.AppContext;
+
 /**
  * @description:
  * @author: Designer
@@ -7,6 +9,8 @@ package org.designer.common.context;
  */
 public interface Context {
 
-    public void refresh(Object obj);
+    void startApp(AppContext appContext);
+
+    int getConst();
 
 }

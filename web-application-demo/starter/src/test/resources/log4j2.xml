@@ -20,8 +20,8 @@
             <PatternLayout pattern="${log.pattern}"/>
         </Console>
 
-        <RollingFile name="PAYMENT_REQUEST_LOG"
-                     immediateFlush="true" fileName="${log.path}/payment-request.log"
+        <RollingFile name="APP_LOG"
+                     immediateFlush="true" fileName="${log.path}/app.log"
                      filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-payment-request-%d{yyyy-MM-dd}.log.gz">
             <PatternLayout>
                 <charset>${log.charset}</charset>
@@ -149,18 +149,8 @@
         <logger name="org.apache.ibatis" level="debug"/>
         <logger name="org.mybatis" level="debug"/>
 
-        <logger name="cn.enjoy" level="INFO" additivity="false" includeLocation="true">
+        <logger name="org.designer" level="DEBUG" additivity="false" includeLocation="true">
             <appender-ref ref="Console"/>
-            <appender-ref ref="TRACE_APPENDER"/>
-            <appender-ref ref="DEBUG_APPENDER"/>
-            <appender-ref ref="INFO_APPENDER"/>
-            <appender-ref ref="WARN_APPENDER"/>
-            <appender-ref ref="ERROR_APPENDER"/>
-        </logger>
-
-        <logger name="PAYMENT_REQUEST" level="INFO" additivity="false" includeLocation="true">
-            <appender-ref ref="Console"/>
-            <appender-ref ref="PAYMENT_REQUEST_LOG"/>
         </logger>
 
     </Loggers>
