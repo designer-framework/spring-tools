@@ -37,6 +37,7 @@
         <module>spring-auto-factory</module>
         <module>thread-utils</module>
         <module>spring-xml-support</module>
+        <module>web-application-demo</module>
     </modules>
 
     <dependencies>
