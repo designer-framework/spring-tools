@@ -19,29 +19,19 @@
     </properties>
 
     <modules>
-        <module>module-common</module>
-        <module>common</module>
-        <module>module</module>
-        <module>service</module>
-        <module>starter</module>
+        <module>web-module-common</module>
+        <module>web-common</module>
+        <module>web-module</module>
+        <module>web-service</module>
+        <module>web-starter</module>
         <module>test-app-jar</module>
     </modules>
 
     <dependencies>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>1.2.76</version>
-        </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>fastjson</artifactId>
-                <version>${fastjson-version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
                 <artifactId>spring-tools</artifactId>
@@ -49,27 +39,27 @@
             </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
-                <artifactId>module-common</artifactId>
+                <artifactId>web-module-common</artifactId>
                 <version>${app-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
-                <artifactId>common</artifactId>
+                <artifactId>web-common</artifactId>
                 <version>${app-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
-                <artifactId>module</artifactId>
+                <artifactId>web-module</artifactId>
                 <version>${app-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
-                <artifactId>service</artifactId>
+                <artifactId>web-service</artifactId>
                 <version>${app-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.designer</groupId>
-                <artifactId>starter</artifactId>
+                <artifactId>web-starter</artifactId>
                 <version>${app-version}</version>
             </dependency>
             <dependency>
@@ -79,6 +69,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
 
 </project>

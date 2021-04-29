@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>org.designer</groupId>
-            <artifactId>module-common</artifactId>
+            <artifactId>web-common</artifactId>
         </dependency>
     </dependencies>
 

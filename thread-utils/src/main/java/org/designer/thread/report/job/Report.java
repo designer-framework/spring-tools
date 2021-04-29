@@ -1,5 +1,8 @@
 package org.designer.thread.report.job;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @description:
  * @author: Designer
@@ -14,6 +17,10 @@ public interface Report<K, V> {
      * @return
      */
     int getSizeByKey(K jobStatus);
+
+    Map<String, List<V>> getExceptionInfo(K jobStatus);
+
+    List<V> getJobByStatus(K jobStatus);
 
     /**
      * 任务总数量[仅供参考]

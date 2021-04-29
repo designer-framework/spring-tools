@@ -1,71 +1,68 @@
 package org.designer.thread.context;
 
+import lombok.extern.log4j.Log4j2;
 import org.designer.thread.MyExecutorCompletionService;
 import org.designer.thread.MyThreadPoolExecutor;
-import org.designer.thread.callable.JobCallable;
-import org.designer.thread.entity.Job;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
-import org.designer.thread.exception.JobExistException;
+import org.designer.thread.interrupt.BaseInterrupt;
+import org.designer.thread.interrupt.InterruptImpl;
 import org.designer.thread.property.CompletionServiceProperty;
-import org.designer.thread.report.job.JobReportContext;
-import org.designer.thread.report.job.JobReportContextImpl;
-import org.designer.thread.utils.MathUtils;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 /**
  * @description:
  * @author: Designer
  * @date : 2021/4/21 13:50
  */
-public abstract class AbstractJobContext<T> implements AutoCloseable, JobContext<JobStatus, T> {
-    /**
-     *
-     */
-    protected final MyThreadPoolExecutor threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + new Date(), 3000);
+@Log4j2
+public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> {
 
     /**
      *
      */
-    protected final MyExecutorCompletionService<JobResult<T>> myExecutorCompletionService = MyExecutorCompletionService
-            .getInstance(
-                    CompletionServiceProperty.<JobResult<T>>builder().threadPoolExecutor(threadPoolExecutor)
-                            .queue(new ArrayBlockingQueue<>(3000)).build()
-            );
-    /**
-     *
-     */
-    protected final Map<String, JobResult<T>> futureMap = new ConcurrentHashMap<>();
-    /**
-     *
-     */
-    protected final JobReportContext<JobStatus, JobResult<T>> jobReportContext = new JobReportContextImpl<>();
+    protected final MyThreadPoolExecutor threadPoolExecutor;
 
-    private static <T> JobCallable<T> copyJobToTask(Job<T> job) {
-        return JobCallable.<T>builder()
-                .batchId(job.getBatchId())
-                .jobId(job.getJobId())
-                .task(job.getTask())
-                .createTime(job.getCreateTime())
-                .build();
+    /**
+     *
+     */
+    protected final MyExecutorCompletionService<JobResult<T>> myExecutorCompletionService;
+
+    protected final BaseInterrupt baseInterrupt;
+
+    protected final ReadWriteLock readWriteLock;
+
+    protected final Predicate<JobResult<T>> processorCompletionPredict;
+
+    public AbstractJobContext(int queueSize) {
+        this(queueSize, true, null);
     }
 
-    //private final AtomicInteger counter = new AtomicInteger(0);
-
-    @Override
-    public String getPercentage(JobStatus jobStatus) {
-        return MathUtils.computePercentage(jobReportContext.getSizeByKey(jobStatus), jobReportContext.size());
+    public AbstractJobContext(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
+        this(queueSize, true, processorCompletionPredict);
     }
 
-    public int getJobQueueSize() {
-        return futureMap.size();
+    public AbstractJobContext(int queueSize, boolean fair, Predicate<JobResult<T>> processorCompletionPredict) {
+        this.processorCompletionPredict = processorCompletionPredict;
+        threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + new Date(), queueSize);
+        myExecutorCompletionService = MyExecutorCompletionService.getInstance(
+                CompletionServiceProperty
+                        .<JobResult<T>>builder()
+                        .threadPoolExecutor(threadPoolExecutor)
+                        .queue(new ArrayBlockingQueue<>(queueSize)).build()
+        );
+        readWriteLock = new ReentrantReadWriteLock(fair);
+        baseInterrupt = new InterruptImpl(readWriteLock);
     }
+
+    abstract void submitReport(JobResult<T> tJobResult);
 
     @Override
     public boolean pollJob(int count) throws InterruptedException, ExecutionException {
@@ -77,7 +74,7 @@ public abstract class AbstractJobContext<T> implements AutoCloseable, JobContext
             Future<JobResult<T>> result;
             while ((result = myExecutorCompletionService.poll()) != null) {
                 try {
-                    jobReportContext.submit(result.get());
+                    submitReport(result.get());
                 } catch (ExecutionException e) {
                     throw e;
                 } finally {
@@ -86,19 +83,6 @@ public abstract class AbstractJobContext<T> implements AutoCloseable, JobContext
             }
         }
         return true;
-    }
-
-    @Override
-    public void submitJob(Job<T> job) {
-        if (futureMap.containsKey(job.getJobId())) {
-            JobResult<T> tJobResult = new JobResult<>(job.getJobId());
-            tJobResult.exception(new JobExistException(job.getJobId() + ", 任务名字重复"));
-            jobReportContext.submit(tJobResult);
-        } else {
-            //counter.incrementAndGet();
-            Future<JobResult<T>> jobResultFuture = myExecutorCompletionService.submit(copyJobToTask(job));
-            futureMap.put(job.getJobId(), new JobResult<>(jobResultFuture, job.getJobId()));
-        }
     }
 
     @Override

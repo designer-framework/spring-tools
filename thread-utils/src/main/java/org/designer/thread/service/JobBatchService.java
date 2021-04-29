@@ -4,10 +4,12 @@ import lombok.extern.log4j.Log4j2;
 import org.designer.thread.context.JobContext;
 import org.designer.thread.context.JobContextImpl;
 import org.designer.thread.entity.Job;
+import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.report.container.ReportContextContainer;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @description: 批处理任务集合, 可动态监控. 但具体的监控逻辑需根据实际业务情况自行实现
@@ -17,7 +19,10 @@ import java.util.List;
 @Log4j2
 public class JobBatchService<T> {
 
+    private final int queueSize = 3000;
+
     private final ReportContextContainer<T> reportContextContainer = new ReportContextContainer<>();
+
 
     /**
      * 批量投放任务集合, 直接返回结果, 也可以直接放入异步线程池.
@@ -28,7 +33,21 @@ public class JobBatchService<T> {
      * @throws Exception
      */
     public JobContext<JobStatus, T> batchProcess(List<Job<T>> jobs, String batchName) throws Exception {
-        try (JobContextImpl<T> testContext = new JobContextImpl<>();) {
+        return batchProcess(jobs, batchName, queueSize, null);
+    }
+
+    /**
+     * 批量投放任务集合
+     *
+     * @param jobs                       任务集合
+     * @param batchName                  该任务的批次名
+     * @param queueSize                  线程池的线程全部繁忙后, 将会放入队列, 该参数表示队列大小
+     * @param processorCompletionPredict 当该判断返回true时, 则其他线程全部中断. 返回false 或, 传null, 则不做任何操作
+     * @return
+     * @throws Exception
+     */
+    public JobContext<JobStatus, T> batchProcess(List<Job<T>> jobs, String batchName, int queueSize, Predicate<JobResult<T>> processorCompletionPredict) throws Exception {
+        try (JobContext<JobStatus, T> testContext = new JobContextImpl<>(queueSize, processorCompletionPredict)) {
             reportContextContainer.put(batchName, testContext);
             try {
                 jobs.forEach(testContext::submitJob);

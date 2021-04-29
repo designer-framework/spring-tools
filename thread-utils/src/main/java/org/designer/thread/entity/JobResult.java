@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 @SuperBuilder
 public class JobResult<T> {
 
-    private final String jobName;
+    private final String jobId;
 
     private final LocalDateTime startTime;
 
@@ -26,19 +26,19 @@ public class JobResult<T> {
 
     private String errorMsg;
 
-    private Exception e;
+    private Exception exception;
 
     private T result;
 
     private Future<JobResult<T>> resultFuture;
 
-    public JobResult(Future<JobResult<T>> task, String jobName) {
-        this(jobName);
+    public JobResult(Future<JobResult<T>> task, String jobId) {
+        this(jobId);
         resultFuture = task;
     }
 
-    public JobResult(String jobName) {
-        this.jobName = jobName;
+    public JobResult(String jobId) {
+        this.jobId = jobId;
         jobStatus = JobStatus.SUBMIT;
         startTime = LocalDateTime.now();
     }
@@ -71,19 +71,19 @@ public class JobResult<T> {
     }
 
     public final void exception(Exception e) {
-        this.e = e;
+        exception = e;
         jobStatus = JobStatus.EXCEPTION;
     }
 
     @Override
     public String toString() {
         return "JobResult{" +
-                "jobName='" + jobName + '\'' +
+                "jobName='" + jobId + '\'' +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 ", jobStatus=" + jobStatus +
                 ", errorMsg='" + errorMsg + '\'' +
-                ", e=" + e +
+                ", e=" + exception +
                 ", result=" + result +
                 ", resultFuture=" + resultFuture +
                 '}';

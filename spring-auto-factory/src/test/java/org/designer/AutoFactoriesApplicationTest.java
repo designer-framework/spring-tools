@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 /**
  * Unit test for simple App.
  */
-
 @EnabledAutoFactoryDi(enable = true)
 @RunWith(value = SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AutoFactoriesApplicationTest.AutoFactoriesApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

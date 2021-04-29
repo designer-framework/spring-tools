@@ -2,6 +2,7 @@ package org.designer.thread;
 
 
 import lombok.extern.log4j.Log4j2;
+import org.designer.thread.interrupt.BaseInterrupt;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -33,12 +34,13 @@ public class InterruptCallable<T> implements Callable<Optional<T>> {
             return Optional.empty();
         } else {
             Optional<T> streamList = optionalCallable.call();
-            if (streamList.isPresent() && !(streamList.get() == null)) {
+            if (streamList.isPresent()) {
                 synchronized (baseInterrupt) {
                     baseInterrupt.interrupt();
                 }
+                return streamList;
             }
-            return streamList;
+            return Optional.empty();
         }
     }
 
