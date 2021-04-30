@@ -7,7 +7,8 @@ import org.springframework.lang.Nullable;
 import org.w3c.dom.Element;
 
 /**
- * @description:
+ * @description: 该类主要目的是将方法中的 BeanDefinitionBuilder 暴露给开发者
+ * 让开发者来对标签中的参数进行解析及加载成自己的所需要的信息然后设置到 BeanDefinitionBuilder 中, 从而对bd的默认行为方法等进行修改或者新增
  * @author: Designer
  * @date : 2021/4/23 22:15
  */
