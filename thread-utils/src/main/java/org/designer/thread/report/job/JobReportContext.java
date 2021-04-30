@@ -10,7 +10,7 @@ import org.designer.thread.report.ReportContext;
 public interface JobReportContext<K, V> extends ReportContext<K, V> {
 
     /**
-     * 将任务处理结果提交至报告中
+     * 讲任务处理结果提交至报告中
      *
      * @param tJobResult
      */

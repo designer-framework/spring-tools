@@ -2,9 +2,9 @@ package org.designer.thread.entity;
 
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.designer.thread.callable.JobCallable;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.Callable;
 
 /**
  * @description:
@@ -19,11 +19,11 @@ public class Job<T> {
 
     private final LocalDateTime createTime;
 
-    private final Callable<JobResult<T>> task;
+    private final JobCallable<JobResult<T>> task;
 
     private final String batchId;
 
-    public Job(Callable<JobResult<T>> task, String jobId, String batchId) {
+    public Job(JobCallable<JobResult<T>> task, String jobId, String batchId) {
         super();
         this.task = task;
         this.jobId = jobId;
