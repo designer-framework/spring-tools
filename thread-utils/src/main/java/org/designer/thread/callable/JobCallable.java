@@ -3,10 +3,11 @@ package org.designer.thread.callable;
 import org.designer.thread.interrupt.BaseInterrupt;
 
 /**
- * @description:
+ * @description: 封装Callable
  * @author: Designer
  * @date : 2021/4/28 17:49
  */
+@FunctionalInterface
 public interface JobCallable<V> {
 
     /**

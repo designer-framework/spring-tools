@@ -39,6 +39,9 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
 
     protected final ReadWriteLock readWriteLock;
 
+    /**
+     * 判断为true时, 表示任务已完成
+     */
     protected final Predicate<JobResult<T>> processorCompletionPredict;
 
     public AbstractJobContext(int queueSize) {

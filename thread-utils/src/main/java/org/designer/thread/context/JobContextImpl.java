@@ -27,9 +27,9 @@ import java.util.function.Predicate;
 public class JobContextImpl<T> extends AbstractJobContext<T> {
 
     /**
-     * 任务待处理任务集合
+     * 待处理任务集合
      */
-    protected final Map<String, JobResult<T>> futureMap;
+    protected final Map<String, JobResult<T>> waitProcessJobs;
     /**
      * 任务完成情况报告
      */
@@ -38,18 +38,18 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
     public JobContextImpl(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
         super(queueSize, processorCompletionPredict);
         jobReportContext = new JobReportContextImpl<>();
-        futureMap = new ConcurrentHashMap<>();
+        waitProcessJobs = new ConcurrentHashMap<>();
     }
 
     @Override
     public void submitJob(Job<T> job) {
-        if (futureMap.containsKey(job.getJobId())) {
+        if (waitProcessJobs.containsKey(job.getJobId())) {
             JobResult<T> tJobResult = new JobResult<>(job.getJobId());
             tJobResult.exception(new JobExistException(job.getJobId() + ", 任务名字重复"));
             jobReportContext.submitReport(tJobResult);
         } else {
             Future<JobResult<T>> jobResultFuture = myExecutorCompletionService.submit(copyJobToTask(job));
-            futureMap.put(job.getJobId(), new JobResult<>(jobResultFuture, job.getJobId()));
+            waitProcessJobs.put(job.getJobId(), new JobResult<>(jobResultFuture, job.getJobId()));
         }
     }
 
@@ -109,7 +109,7 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
 
     @Override
     public int getJobQueueSize() {
-        return futureMap.size();
+        return waitProcessJobs.size();
     }
 
 }

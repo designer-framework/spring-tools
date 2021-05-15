@@ -12,12 +12,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 @Log4j2
 public class AbstractInterruptImpl implements Interrupt {
 
-    private final ReadWriteLock writeLock;
+    private final ReadWriteLock readWriteLock;
 
     private volatile Boolean isInterrupt = false;
 
-    public AbstractInterruptImpl(ReadWriteLock writeLock) {
-        this.writeLock = writeLock;
+    public AbstractInterruptImpl(ReadWriteLock readWriteLock) {
+        this.readWriteLock = readWriteLock;
     }
 
     @Override
@@ -44,15 +44,15 @@ public class AbstractInterruptImpl implements Interrupt {
      */
     @Override
     public void lockAndRun(CallRunnable runnable) throws Exception {
-        writeLock.readLock().unlock();
-        writeLock.writeLock().lock();
+        readWriteLock.readLock().unlock();
+        readWriteLock.writeLock().lock();
         try {
             log.debug("锁定资源");
             runnable.run();
             log.debug("资源获取完成");
         } finally {
-            writeLock.writeLock().unlock();
-            writeLock.readLock().lock();
+            readWriteLock.writeLock().unlock();
+            readWriteLock.readLock().lock();
         }
     }
 
