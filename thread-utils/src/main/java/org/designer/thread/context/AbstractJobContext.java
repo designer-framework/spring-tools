@@ -5,9 +5,11 @@ import org.designer.thread.MyExecutorCompletionService;
 import org.designer.thread.MyThreadPoolExecutor;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
-import org.designer.thread.interrupt.BaseInterrupt;
+import org.designer.thread.interrupt.Interrupt;
 import org.designer.thread.interrupt.InterruptImpl;
 import org.designer.thread.property.CompletionServiceProperty;
+import org.designer.thread.utils.UnsafeUtil;
+import sun.misc.Unsafe;
 
 import java.util.Date;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -25,35 +27,60 @@ import java.util.function.Predicate;
 @Log4j2
 public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> {
 
+    private final static Unsafe UNSAFE = UnsafeUtil.getUnsafe();
+
+    private static long stateOffset;
+
+    static {
+        try {
+            stateOffset = UNSAFE.objectFieldOffset(AbstractJobContext.class.getDeclaredField("state"));
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      *
      */
     protected final MyThreadPoolExecutor threadPoolExecutor;
-
     /**
      *
      */
     protected final MyExecutorCompletionService<JobResult<T>> myExecutorCompletionService;
-
-    protected final BaseInterrupt baseInterrupt;
-
-    protected final ReadWriteLock readWriteLock;
-
     /**
-     * 判断为true时, 表示任务已完成
+     *
      */
-    protected final Predicate<JobResult<T>> processorCompletionPredict;
+    protected final Interrupt interrupt;
+    /**
+     * 资源锁
+     */
+    protected final ReadWriteLock readWriteLock;
+    /**
+     * 判断为true时, 表示任务已完成, 其它新来的线程会直接中断
+     */
+    protected final Predicate<JobResult<T>> jobCompletionPredict;
+    /**
+     * 线程池状态
+     */
+    private volatile int state = 0;
 
     public AbstractJobContext(int queueSize) {
         this(queueSize, true, null);
     }
 
-    public AbstractJobContext(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
-        this(queueSize, true, processorCompletionPredict);
+    public AbstractJobContext(int queueSize, Predicate<JobResult<T>> jobCompletionPredict) {
+        this(queueSize, true, jobCompletionPredict);
     }
 
-    public AbstractJobContext(int queueSize, boolean fair, Predicate<JobResult<T>> processorCompletionPredict) {
-        this.processorCompletionPredict = processorCompletionPredict;
+    /**
+     * 考虑多种成功情况
+     *
+     * @param queueSize
+     * @param fair
+     * @param jobCompletionPredict
+     */
+    public AbstractJobContext(int queueSize, boolean fair, Predicate<JobResult<T>> jobCompletionPredict) {
+        this.jobCompletionPredict = jobCompletionPredict;
         threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + new Date(), queueSize);
         myExecutorCompletionService = MyExecutorCompletionService.getInstance(
                 CompletionServiceProperty
@@ -62,7 +89,25 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
                         .queue(new ArrayBlockingQueue<>(queueSize)).build()
         );
         readWriteLock = new ReentrantReadWriteLock(fair);
-        baseInterrupt = new InterruptImpl(readWriteLock);
+        interrupt = new InterruptImpl(readWriteLock, this::isCompletion);
+    }
+
+    protected boolean isCompletion() {
+        return state > 0;
+    }
+
+    public void completion() {
+        int tmp = state;
+        //CAS自旋
+        if (!UNSAFE.compareAndSwapInt(this, stateOffset, tmp, tmp + 1)) {
+            while (!UNSAFE.compareAndSwapInt(this, stateOffset, tmp, tmp + 1)) {
+            }
+        }
+    }
+
+    @Override
+    public int getCompletionCount() {
+        return state;
     }
 
     abstract void submitReport(JobResult<T> tJobResult);

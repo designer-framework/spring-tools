@@ -6,6 +6,7 @@ import org.designer.thread.entity.Job;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.exception.JobExistException;
+import org.designer.thread.exception.JobRepeatInterruptException;
 import org.designer.thread.report.job.JobReportContext;
 import org.designer.thread.report.job.JobReportContextImpl;
 import org.designer.thread.utils.MathUtils;
@@ -35,6 +36,8 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
      */
     protected final JobReportContext<JobStatus, JobResult<T>> jobReportContext;
 
+    private final Object lock = new Object();
+
     public JobContextImpl(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
         super(queueSize, processorCompletionPredict);
         jobReportContext = new JobReportContextImpl<>();
@@ -53,29 +56,40 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
         }
     }
 
+    /**
+     * 对Job进行二次封装, 当返回的结果符合任务完成条件则将当前任务池状态设置为已挂起,其它新来的线程不进行运算直接返回
+     *
+     * @param job
+     * @return
+     */
     private Callable<JobResult<T>> copyJobToTask(Job<T> job) {
         Lock readLock = readWriteLock.readLock();
         Callable<JobResult<T>> callable = () -> {
             readLock.lock();
             try {
                 //已经被挂起则直接返回
-                if (baseInterrupt.getInterrupt()) {
+                if (interrupt.getInterrupt()) {
                     JobResult<T> objectJobResult = new JobResult<>(job.getJobId());
-                    objectJobResult.exception(new InterruptedException("任务" + job.getJobId() + "被挂起!"));
+                    objectJobResult.exception(new InterruptedException("任务" + job.getJobId() + "已被中断!"));
                     return objectJobResult;
                 } else {
                     //未被挂起则继续执行
-                    JobResult<T> jobResult = job.getTask().call(baseInterrupt);
-                    if (baseInterrupt.getInterrupt()) {
-                        //TODO
-                    }
-                    //对结果进行校验, 如果任务完成则将任务挂起
-                    if (processorCompletionPredict != null) {
-                        if (jobResult.getJobStatus() == JobStatus.COMPLETION && processorCompletionPredict.test(jobResult)) {
-                            log.info("任务处理完毕, 批次: " + job.getBatchId());
-                            baseInterrupt.interrupt();
-                            return jobResult;
+                    JobResult<T> jobResult = job.getTask().call(interrupt);
+                    //任务执行结果是否为已完成
+                    if (jobCompletionPredict != null && jobResult.getJobStatus() == JobStatus.COMPLETION) {
+                        completion();
+                        //已有状态为Completion的任务, 是否继续执行剩下的任务
+                        if (jobCompletionPredict.test(jobResult)) {
+                            //任务挂起失败同时目标资源获取成功
+                            if (!interrupt.interrupt()) {
+                                jobResult.exception(new JobRepeatInterruptException("资源获取成功, 但任务在此之前已经被挂起：" + job.getJobId()));
+                                log.warn("任务在此之前已经被挂起, 任务ID: {}, 批处理ID: {}", job.getJobId(), job.getBatchId());
+                                return jobResult;
+                            } else {
+                                log.info("任务处理完毕, 任务ID: {}, 批处理ID: {}", job.getJobId(), job.getBatchId());
+                            }
                         }
+                        return jobResult;
                     }
                     return jobResult;
                 }
@@ -88,8 +102,7 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
                 , job.getJobId()
                 , job.getBatchId()
         )
-                .setCreateTime(job.getCreateTime()
-                );
+                .setCreateTime(job.getCreateTime());
     }
 
     @Override

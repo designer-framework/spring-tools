@@ -11,7 +11,7 @@ import org.designer.thread.interrupt.BaseInterrupt;
 public interface JobCallable<V> {
 
     /**
-     * @param
+     * @param baseInterrupt 通过baseInterrupt控制资源
      * @return
      * @throws Exception
      */

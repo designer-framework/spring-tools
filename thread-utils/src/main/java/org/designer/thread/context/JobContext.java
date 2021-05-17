@@ -9,5 +9,10 @@ import org.designer.thread.entity.JobResult;
  */
 public interface JobContext<K, V> extends Context<K, V, JobResult<V>>, AutoCloseable {
 
-
+    /**
+     * 符合特定要求的资源总数
+     *
+     * @return
+     */
+    int getCompletionCount();
 }

@@ -1,6 +1,7 @@
 package org.designer.thread.interrupt;
 
 import lombok.extern.log4j.Log4j2;
+import org.designer.thread.exception.JobRepeatInterruptException;
 
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -10,7 +11,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @date : 2021/4/28 18:33
  */
 @Log4j2
-public class AbstractInterruptImpl implements Interrupt {
+public abstract class AbstractInterruptImpl implements Interrupt {
 
     private final ReadWriteLock readWriteLock;
 
@@ -31,8 +32,8 @@ public class AbstractInterruptImpl implements Interrupt {
     }
 
     @Override
-    public synchronized void interrupt() {
-        Interrupt.super.interrupt();
+    public synchronized boolean interrupt() throws JobRepeatInterruptException {
+        return Interrupt.super.interrupt();
     }
 
     /**
@@ -55,5 +56,6 @@ public class AbstractInterruptImpl implements Interrupt {
             readWriteLock.readLock().lock();
         }
     }
+
 
 }

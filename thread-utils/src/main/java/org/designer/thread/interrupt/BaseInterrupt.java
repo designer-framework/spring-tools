@@ -17,7 +17,7 @@ public interface BaseInterrupt {
     /**
      * 如果当前线程状态未挂起, 则调用挂起
      */
-    void interrupt();
+    boolean interrupt();
 
     /**
      * 当发现目标资源时, 对线程池进行锁定, 其他新来的线程都将等待. 这样可以让更多的CPU时间片用来获取目标资源.
