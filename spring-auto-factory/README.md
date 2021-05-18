@@ -10,4 +10,4 @@
 > 2. 但可能有这样的业务需求: 在多个接口实现类中对特定的接口进行方法拦截校验,可通过注解 <font color="yellow"> @InvokeVerify</font>
      > ![img.png](img/@InvokeVerify.png)进行判断, 实现方式与MyBatis中的插件拓展类似
 
-> * 
+> *  
