@@ -34,4 +34,11 @@ public interface Context<K, V, R> {
      */
     int getJobQueueSize();
 
+    /**
+     * 当前批次所有任务大小
+     *
+     * @return
+     */
+    int getJobSize();
+
 }

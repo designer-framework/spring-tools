@@ -53,7 +53,7 @@ public class Main {
     public void batchProcessIfAnyJobCompletion() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
-        List<Job<String>> threads = ForEachUtil.listThread(200, () -> newTask(UUID.randomUUID().toString(), uuid));
+        List<Job<String>> threads = ForEachUtil.listThread(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
         JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(
                 threads
                 , "BATCH-" + UUID.randomUUID()
@@ -68,7 +68,7 @@ public class Main {
      *
      * @throws Exception
      */
-    //@Test
+    @Test
     public void batchProcess() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
@@ -78,11 +78,12 @@ public class Main {
     }
 
     public void print(JobContext<JobStatus, String> jobContext) {
+        log.warn("异常:" + jobContext.getExceptionInfo());
         log.warn("成功率:" + jobContext.getPercentage(JobStatus.COMPLETION));
         log.warn("错误率:" + jobContext.getPercentage(JobStatus.ERROR));
         log.warn("异常率:" + jobContext.getPercentage(JobStatus.EXCEPTION));
         log.warn("未处理比例:" + jobContext.getPercentage(JobStatus.SUBMIT));
-        log.warn("异常:" + jobContext.getExceptionInfo());
+        log.warn("被执行的任务总大小:" + jobContext.getJobSize());
         log.warn("特定目标资源总数:" + jobContext.getCompletionCount());
         Map<String, List<JobResult<String>>> exceptionInfo = jobContext.getExceptionInfo();
         Set<Map.Entry<String, List<JobResult<String>>>> entries = exceptionInfo.entrySet();

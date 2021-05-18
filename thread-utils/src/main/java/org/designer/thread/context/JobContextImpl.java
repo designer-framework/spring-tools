@@ -36,7 +36,7 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
      */
     protected final JobReportContext<JobStatus, JobResult<T>> jobReportContext;
 
-    private final Object lock = new Object();
+    // private final Object lock = new Object();
 
     public JobContextImpl(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
         super(queueSize, processorCompletionPredict);
@@ -123,6 +123,11 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
     @Override
     public int getJobQueueSize() {
         return waitProcessJobs.size();
+    }
+
+    @Override
+    public int getJobSize() {
+        return jobReportContext.size();
     }
 
 }

@@ -29,13 +29,13 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
 
     private final static Unsafe UNSAFE = UnsafeUtil.getUnsafe();
 
-    private static long stateOffset;
+    private static final long stateOffset;
 
     static {
         try {
             stateOffset = UNSAFE.objectFieldOffset(AbstractJobContext.class.getDeclaredField("state"));
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new Error(e);
         }
     }
 
@@ -96,12 +96,17 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
         return state > 0;
     }
 
-    public void completion() {
+    /**
+     * 在多个线程涌入的时候, 第一个线程在未完成CAS操作时, 第二个线程完成了CAS操作,
+     * 此时第一个线程持有的的值不是最新的, 那么CAS操作会失败。
+     * 再次CAS时需要将临时变量重新变更为最新值。
+     * 使用临时变量的目的: tmp及tmp+1代码块在入方法栈时并不是原子操作, 如果有一个更改state的操作执行在两代码块之间, 那么CAS操作就会失败
+     */
+    protected void completion() {
         int tmp = state;
         //CAS自旋
-        if (!UNSAFE.compareAndSwapInt(this, stateOffset, tmp, tmp + 1)) {
-            while (!UNSAFE.compareAndSwapInt(this, stateOffset, tmp, tmp + 1)) {
-            }
+        while (!UNSAFE.compareAndSwapInt(this, stateOffset, tmp, tmp + 1)) {
+            tmp = state;
         }
     }
 
