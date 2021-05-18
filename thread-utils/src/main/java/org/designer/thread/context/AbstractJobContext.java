@@ -99,7 +99,8 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
     /**
      * 在多个线程涌入的时候, 第一个线程在未完成CAS操作时, 第二个线程完成了CAS操作,
      * 此时第一个线程持有的的值不是最新的, 那么CAS操作会失败。
-     * 再次CAS时需要将临时变量重新变更为最新值。
+     * 如果不使用临时变量来获取当前state的最新值, 将会陷入死循环。
+     * 通过 jstack 命令可以看到本方法一直在运行, 其它线程一直处于WAIT状态, 通过DEBUG反复测试, 较容易复现问题
      * 使用临时变量的目的: tmp及tmp+1代码块在入方法栈时并不是原子操作, 如果有一个更改state的操作执行在两代码块之间, 那么CAS操作就会失败
      */
     protected void completion() {
