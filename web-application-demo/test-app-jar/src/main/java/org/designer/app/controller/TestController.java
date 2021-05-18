@@ -15,13 +15,8 @@ public class TestController {
 
 
     @RequestMapping("/getClassLoader")
-    public String getClassLoader(String str) {
-        String response = str;
-        return "\r\n" +
-                "RESULT:" + response +
-                "\r\n" +
-                "ClassLoader:" + getClass().getClassLoader().toString() +
-                "\r\n";
+    public String getClassLoader() {
+        return getClass().getClassLoader().toString();
     }
 
 
