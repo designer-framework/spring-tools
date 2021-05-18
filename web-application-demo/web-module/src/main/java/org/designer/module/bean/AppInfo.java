@@ -25,6 +25,9 @@ public class AppInfo implements App {
 
     private String appName;
 
+    /**
+     *
+     */
     private int port;
 
 }

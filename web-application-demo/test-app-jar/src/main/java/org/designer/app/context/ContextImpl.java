@@ -23,12 +23,12 @@ public class ContextImpl {
     }
 
     public Context startApp() {
-        log.info(THREAD_NAME + ": 启动App中!");
-        log.info(THREAD_NAME + ": APP类加载器: " + getClass().getClassLoader());
-        log.info(THREAD_NAME + ": APP加载完成");
-        ServerContext serverContext = new ServerContext(this);
-        serverContext.loadRequestMapping();
-        return serverContext;
+        log.info(THREAD_NAME + ": 启动App[{}]中", app.getAppName());
+        log.info(THREAD_NAME + ": APP[{}]类加载器: {}", app.getAppName(), getClass().getClassLoader());
+        log.info(THREAD_NAME + ": APP[{}]加载完成!", app.getAppName());
+        AppServerContext appServerContext = new AppServerContext(this);
+        appServerContext.loadRequestMapping();
+        return appServerContext;
     }
 
     public App getAppInfo() {

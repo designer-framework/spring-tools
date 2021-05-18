@@ -1,7 +1,6 @@
 package org.designer.common.web.server;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.common.context.Context;
 import org.designer.common.web.util.SelectorHandler;
 
 import java.io.IOException;
@@ -20,8 +19,14 @@ import java.util.concurrent.Executors;
  * @date : 2021/4/24 5:38
  */
 @Log4j2
-public class Server {
+public class Server extends Thread {
 
+    private static final int DEFAULT_PORT = 8080;
+    private static final String DEFAULT_APP_NAME = "DEFAULT-" + DEFAULT_PORT;
+    /**
+     * 服务端口
+     */
+    private final int port;
     private final SelectorHandler selectorHandler;
 
     /**
@@ -29,13 +34,18 @@ public class Server {
      */
     private final ExecutorService EXECUTOR = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
-    public Server() {
-        selectorHandler = new SelectorHandler();
+    public Server(SelectorHandler selectorHandler, int port, String appName) {
+        super(appName + "-" + port);
+        this.selectorHandler = selectorHandler;
+        this.port = port;
         Runtime.getRuntime().addShutdownHook(new Thread(EXECUTOR::shutdown));
     }
 
-    public static void main(String[] args) {
-        new Server().startSelectorPolling(8080);
+    public Server(SelectorHandler selectorHandler, int port) {
+        super(DEFAULT_APP_NAME);
+        this.selectorHandler = selectorHandler;
+        this.port = port;
+        Runtime.getRuntime().addShutdownHook(new Thread(EXECUTOR::shutdown));
     }
 
     private static Selector newSelector(int port) throws IOException {
@@ -52,16 +62,17 @@ public class Server {
         return selector;
     }
 
-    public void putAppContext(String appName, Context appContainer) {
-        selectorHandler.putAppContext(appName, appContainer);
+    @Override
+    public void run() {
+        startSelectorPolling();
     }
 
-    public void startSelectorPolling(int port) {
+    public void startSelectorPolling() {
         try {
             Selector selector = newSelector(port);
             while (true) {
                 //阻塞,直到有请求进来
-                selector.select();
+                selector.select(1000);
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = selectedKeys.iterator();
                 while (iterator.hasNext()) {

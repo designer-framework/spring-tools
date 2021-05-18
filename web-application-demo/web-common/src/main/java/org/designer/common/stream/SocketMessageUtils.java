@@ -1,6 +1,7 @@
 package org.designer.common.stream;
 
 import io.vavr.Tuple2;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
  * @author: Designer
  * @date : 2021/4/24 7:00
  */
+@Log4j2
 public class SocketMessageUtils {
 
     public static final String CONTENT_LENGTH = "Content-Length";
@@ -31,10 +33,13 @@ public class SocketMessageUtils {
         ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         int readLineLen;
-        while ((readLineLen = socketChannel.read(byteBuffer)) > 0 && byteBuffer.hasRemaining()) {
-            byte[] array = byteBuffer.array();
-            byteArrayOutputStream.write(array, 0, readLineLen);
-            byteBuffer.clear();
+        while ((readLineLen = socketChannel.read(byteBuffer)) > 0) {
+            byteBuffer.flip();
+            if (byteBuffer.hasRemaining()) {
+                byte[] array = byteBuffer.array();
+                byteArrayOutputStream.write(array, 0, readLineLen);
+                byteBuffer.clear();
+            }
         }
         //ByteBuffer转字节流
         return readHtml(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
@@ -76,6 +81,7 @@ public class SocketMessageUtils {
         }
         String htmlHead = headerBody.toString();
         String htmlBody = body.toString();
+        log.debug(htmlHead + htmlBody);
         return new Tuple2<>(htmlHead, htmlBody);
     }
 
@@ -97,11 +103,11 @@ public class SocketMessageUtils {
 
     public static void writeHtml(SocketChannel socketChannel, String msg, int status) throws IOException {
         StringBuilder builder = new StringBuilder();
-        builder.append("HTTP/1.1 " + status);
+        builder.append("HTTP/1.1 ").append(status);
         builder.append("\r\n");
         builder.append("Content-Type: text/html; charset=utf-8");
         builder.append("\r\n");
-        builder.append("Content-Length:" + getByteLength(msg));
+        builder.append("Content-Length: ").append(getByteLength(msg));
         builder.append("\r\n");
         builder.append("\r\n");
         builder.append(msg);

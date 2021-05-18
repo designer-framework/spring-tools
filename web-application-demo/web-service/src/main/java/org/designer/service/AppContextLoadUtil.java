@@ -2,17 +2,17 @@ package org.designer.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.designer.common.bean.App;
+import org.designer.common.bean.RunStrategy;
 import org.designer.common.classload.AppClassloader;
 import org.designer.common.context.Context;
 import org.designer.common.exception.AppException;
 import org.designer.common.exception.FatalException;
 import org.designer.common.exception.LoadException;
 import org.designer.common.utils.AppUtils;
-import org.designer.common.web.server.Server;
+import org.designer.common.web.server.ServerCtx;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -26,10 +26,10 @@ import java.util.concurrent.Executors;
 @Log4j2
 public class AppContextLoadUtil {
 
-    private final Server server;
+    private final ServerCtx serverCtx;
 
     public AppContextLoadUtil() {
-        server = new Server();
+        serverCtx = new ServerCtx();
     }
 
     /**
@@ -47,34 +47,42 @@ public class AppContextLoadUtil {
     private static Context loadApp(App app) {
         try {
             AppClassloader appClassloader = new AppClassloader(new File(app.getAppPath()));
-            log.debug("APP[{}]加载成功", app.getAppName());
-            return AppUtils.reflectInvokeApp(app.getMain(), appClassloader, app);
+            Context context = AppUtils.reflectInvokeApp(app.getMain(), appClassloader, app);
+            log.debug("APP[{}]加载成功, 访问地址: {}, 可访问的路径: {}"
+                    , app.getAppName()
+                    , "http://127.0.0.1:" + app.getPort() + "/" + app.getAppName()
+                    , context.getRequestMappingUrls());
+            return context;
         } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-            throw new LoadException(String.format("APP%s加载失败", app.getAppName()), e);
+            throw new LoadException(String.format("APP[%s]加载失败", app.getAppName()), e);
         }
     }
 
-    public void loadApps(Map<String, App> contexts) {
+    /**
+     * @param contexts
+     * @param runStrategy 暂时只支持所有服务运行在相同的端口上
+     */
+    public void loadApps(Map<String, App> contexts, RunStrategy runStrategy) {
         CountDownLatch countDownLatch = new CountDownLatch(contexts.size());
         ExecutorService executor = newExecutor(contexts.size());
-        Map<String, Context> contextMap = new HashMap<>();
         try {
             contexts.forEach((appName, appContext) -> {
                 executor.execute(() -> {
                     try {
                         Context context = loadApp(appContext);
-                        synchronized (contextMap) {
-                            contextMap.put(appName, context);
-                        }
-                        server.putAppContext(appName, context);
+                        serverCtx.putAppContext(appName, context);
                     } finally {
                         countDownLatch.countDown();
                     }
                 });
             });
             countDownLatch.await();
-            log.debug("APP加载完成");
-            server.startSelectorPolling(8080);
+            serverCtx.startServer(runStrategy);
+            log.debug("Server启动完成");
+            synchronized (this) {
+                //测试
+                wait();
+            }
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         } catch (AppException e) {

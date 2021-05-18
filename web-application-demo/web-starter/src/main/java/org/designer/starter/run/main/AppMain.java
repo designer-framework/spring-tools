@@ -2,6 +2,7 @@ package org.designer.starter.run.main;
 
 
 import org.designer.common.bean.App;
+import org.designer.common.bean.RunStrategy;
 import org.designer.common.utils.AppUtils;
 import org.designer.common.utils.StarterUtils;
 import org.designer.module.bean.AppInfo;
@@ -20,10 +21,14 @@ import java.util.Map;
 
 public class AppMain {
 
+    /**
+     * @param args
+     * @see RunStrategy
+     */
     public static void main(String[] args) {
         List<AppInfo> apps = AppUtils.getApps(AppInfo.class);
         Map<String, App> contexts = StarterUtils.listToMap(apps);
-        new AppContextLoadUtil().loadApps(contexts);
+        new AppContextLoadUtil().loadApps(contexts, RunStrategy.MANY_PORT);
     }
 
 }
