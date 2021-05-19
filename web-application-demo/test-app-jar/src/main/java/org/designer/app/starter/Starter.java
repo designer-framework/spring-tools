@@ -1,9 +1,9 @@
 package org.designer.app.starter;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.app.context.ContextImpl;
+import org.designer.app.context.AppContextInfo;
 import org.designer.common.bean.App;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 
 /**
  * @Project: spring-tools
@@ -15,8 +15,8 @@ import org.designer.common.context.Context;
 @Log4j2
 public class Starter {
 
-    public static Context start(App app) {
-        return new ContextImpl(app).startApp();
+    public static AppContext start(App app) {
+        return new AppContextInfo(app).startApp();
     }
 
 

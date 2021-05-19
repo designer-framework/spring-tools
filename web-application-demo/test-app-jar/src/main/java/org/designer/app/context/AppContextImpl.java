@@ -5,7 +5,7 @@ import org.designer.app.controller.TestController;
 import org.designer.common.annotation.Controller;
 import org.designer.common.annotation.RequestMapping;
 import org.designer.common.bean.App;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 import org.designer.common.exception.FatalException;
 import org.designer.common.utils.MethodInvoke;
 import org.designer.common.utils.UrlUtils;
@@ -22,19 +22,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date : 2021/4/24 1:17
  */
 @Log4j2
-public class AppServerContext implements Context {
+public class AppContextImpl implements AppContext {
 
     private final Map<String, MethodInvoke> methodInvokes = new ConcurrentHashMap<>();
 
-    private final ContextImpl context;
+    private final AppContextInfo appContextInfo;
 
-    public AppServerContext(ContextImpl context) {
-        this.context = context;
+    public AppContextImpl(AppContextInfo appContextInfo) {
+        this.appContextInfo = appContextInfo;
     }
 
     @Override
     public boolean support(String appName) {
-        return context.getAppInfo().getAppName().equals(appName);
+        return appContextInfo.getAppInfo().getAppName().equals(appName);
     }
 
     @Override
@@ -66,6 +66,11 @@ public class AppServerContext implements Context {
         });
     }
 
+    /**
+     * 模拟扫包
+     *
+     * @return
+     */
     private List<Class<?>> scanJarsClass() {
         return Arrays.asList(TestController.class);
     }
@@ -82,7 +87,7 @@ public class AppServerContext implements Context {
 
     @Override
     public App getAppInfo() {
-        return context.getAppInfo();
+        return appContextInfo.getAppInfo();
     }
 
 }

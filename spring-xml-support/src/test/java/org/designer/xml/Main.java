@@ -4,7 +4,6 @@ import org.designer.xml.bean.XmlBean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -16,9 +15,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class Main {
 
     private final static String beanXml = "classpath:customize-xml-support.xml";
-
-    @Autowired
-    private XmlBean xmlBean;
 
     @Test
     public void testCustomizeXmlSupport() {

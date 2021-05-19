@@ -1,6 +1,6 @@
 package org.designer.common.web.util;
 
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -17,7 +17,7 @@ public interface SelectorHandler {
 
     void handler(SelectionKey selectionKey, Selector selector) throws Exception;
 
-    void putAppContext(String appName, Context appContext);
+    void putAppContext(String appName, AppContext appContext);
 
 
 }

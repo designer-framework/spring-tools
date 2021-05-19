@@ -10,7 +10,7 @@ import java.util.List;
  * @author: Designer
  * @date : 2021/4/24 1:05
  */
-public interface Context {
+public interface AppContext {
 
     /**
      * 每个APP都有一个AppName, 通过对应的AppName找到对应的Context

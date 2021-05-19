@@ -4,7 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.designer.common.bean.App;
 import org.designer.common.bean.RunStrategy;
 import org.designer.common.classload.AppClassloader;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 import org.designer.common.exception.AppException;
 import org.designer.common.exception.FatalException;
 import org.designer.common.exception.LoadException;
@@ -44,15 +44,15 @@ public class AppContextLoadUtil {
         return Executors.newFixedThreadPool(thread);
     }
 
-    private static Context loadApp(App app) {
+    private static AppContext loadApp(App app) {
         try {
             AppClassloader appClassloader = new AppClassloader(new File(app.getAppPath()));
-            Context context = AppUtils.reflectInvokeApp(app.getMain(), appClassloader, app);
+            AppContext appContext = AppUtils.reflectInvokeApp(app.getMain(), appClassloader, app);
             log.debug("APP[{}]加载成功, 访问地址: {}, 可访问的路径: {}"
                     , app.getAppName()
                     , "http://127.0.0.1:" + app.getPort() + "/" + app.getAppName()
-                    , context.getRequestMappingUrls());
-            return context;
+                    , appContext.getRequestMappingUrls());
+            return appContext;
         } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
             throw new LoadException(String.format("APP[%s]加载失败", app.getAppName()), e);
         }
@@ -69,7 +69,7 @@ public class AppContextLoadUtil {
             contexts.forEach((appName, appContext) -> {
                 executor.execute(() -> {
                     try {
-                        Context context = loadApp(appContext);
+                        AppContext context = loadApp(appContext);
                         serverCtx.putAppContext(appName, context);
                     } finally {
                         countDownLatch.countDown();

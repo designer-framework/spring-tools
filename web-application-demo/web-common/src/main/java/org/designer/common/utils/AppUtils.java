@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.SneakyThrows;
 import org.designer.common.bean.App;
 import org.designer.common.classload.AppClassloader;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
@@ -53,12 +53,12 @@ public class AppUtils {
         }).collect(Collectors.toList());
     }
 
-    public static Context reflectInvokeApp(String clazz, ClassLoader classLoader, App args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static AppContext reflectInvokeApp(String clazz, ClassLoader classLoader, App args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Class<?> loadClass = ((AppClassloader) classLoader).loadClass(clazz, true);
         Method main = loadClass.getDeclaredMethod("start", App.class);
         Object context = main.invoke(loadClass, args);
-        if (context instanceof Context) {
-            return (Context) context;
+        if (context instanceof AppContext) {
+            return (AppContext) context;
         } else {
             throw new IllegalStateException("加载的不是应用：" + args);
         }

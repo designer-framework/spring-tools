@@ -2,7 +2,7 @@ package org.designer.common.web.server;
 
 import org.designer.common.bean.App;
 import org.designer.common.bean.RunStrategy;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 import org.designer.common.web.util.HttpHandler;
 import org.designer.common.web.util.SelectorHandler;
 
@@ -19,7 +19,7 @@ public class ServerCtx {
     /**
      * 多个APP组成的上下文
      */
-    private final Map<String, Context> appContexts;
+    private final Map<String, AppContext> appContexts;
 
     /**
      * 细粒度锁
@@ -32,10 +32,10 @@ public class ServerCtx {
         appContexts = new ConcurrentHashMap<>(4);
     }
 
-    public void putAppContext(String appName, Context appContainer) {
+    public void putAppContext(String appName, AppContext appContainer) {
         synchronized (lock) {
-            Context context = appContexts.put(appName, appContainer);
-            if (started && context != null) {
+            AppContext appContext = appContexts.put(appName, appContainer);
+            if (started && appContext != null) {
                 refresh();
             }
         }

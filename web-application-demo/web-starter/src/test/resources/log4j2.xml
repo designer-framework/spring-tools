@@ -142,7 +142,7 @@
         <!-- 第三方日志系统 -->
         <logger name="org.springframework.core" level="debug"/>
         <logger name="org.springframework.beans" level="debug"/>
-        <logger name="org.springframework.context" level="debug"/>
+        <logger name="org.springframework.appContext" level="debug"/>
         <logger name="org.springframework.web" level="debug"/>
         <logger name="org.springboot.sample" level="debug"/>
         <logger name="org.apache.http" level="debug"/>

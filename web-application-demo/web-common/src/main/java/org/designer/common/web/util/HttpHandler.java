@@ -2,7 +2,7 @@ package org.designer.common.web.util;
 
 import io.vavr.Tuple2;
 import lombok.extern.log4j.Log4j2;
-import org.designer.common.context.Context;
+import org.designer.common.context.AppContext;
 import org.designer.common.stream.SocketMessageUtils;
 import org.designer.common.utils.MethodInvoke;
 import org.designer.common.utils.UrlUtils;
@@ -27,10 +27,10 @@ public class HttpHandler implements SelectorHandler {
 
     private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
-    private final Map<String, Context> appsContext = new HashMap<>();
+    private final Map<String, AppContext> appsContext = new HashMap<>();
 
     @Override
-    public void putAppContext(String appName, Context appContext) {
+    public void putAppContext(String appName, AppContext appContext) {
         synchronized (appsContext) {
             appsContext.put(appName, appContext);
         }
@@ -79,13 +79,13 @@ public class HttpHandler implements SelectorHandler {
         try {
             Tuple2<String, String> html = SocketMessageUtils.readHtml(socketChannel);
             //通过URI找到上下文
-            Context context = appsContext.get(UrlUtils.getAppName(html._1()));
-            if (context == null) {
+            AppContext appContext = appsContext.get(UrlUtils.getAppName(html._1()));
+            if (appContext == null) {
                 SocketMessageUtils.writeHtml(socketChannel, "404", 404);
             } else {
                 log.info("3. 找到上下文!");
                 //从上下文找到对应的方法
-                MethodInvoke appRequestMapping = context.getAppRequestMapping(UrlUtils.getPath(html._1()));
+                MethodInvoke appRequestMapping = appContext.getAppRequestMapping(UrlUtils.getPath(html._1()));
                 if (appRequestMapping == null) {
                     SocketMessageUtils.write404(socketChannel);
                     //socketChannel.register(selector, SelectionKey.OP_READ);
