@@ -60,7 +60,12 @@ public class AppClassloader extends URLClassLoader {
             //从父类加载Class
             return super.loadClass(name, resolve);
         } catch (ClassNotFoundException e) {
-            return classMap.putIfAbsent(name, super.findClass(name));
+            try {
+                return classMap.putIfAbsent(name, super.findClass(name));
+            } catch (ClassNotFoundException ex) {
+                log.error("类找不到: " + name, ex);
+                throw ex;
+            }
         }
 
     }
