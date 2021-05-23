@@ -31,7 +31,7 @@ public class ForEachUtil {
     }
 
     @SneakyThrows
-    public static List<Job<String>> listThread(int count, Supplier<Job<String>> supplierCallable) {
+    public static List<Job<String>> listJob(int count, Supplier<Job<String>> supplierCallable) {
         CountDownLatch countDownLatch = new CountDownLatch(count);
         List<Job<String>> threads = new ArrayList<>();
         IntStream.range(0, count)

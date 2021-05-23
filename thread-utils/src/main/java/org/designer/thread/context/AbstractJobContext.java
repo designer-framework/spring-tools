@@ -12,9 +12,7 @@ import org.designer.thread.utils.UnsafeUtil;
 import sun.misc.Unsafe;
 
 import java.util.Date;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
@@ -59,17 +57,18 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
      * 判断为true时, 表示任务已完成, 其它新来的线程会直接中断
      */
     protected final Predicate<JobResult<T>> jobCompletionPredict;
+
     /**
      * 线程池状态
      */
     private volatile int state = 0;
 
-    public AbstractJobContext(int queueSize) {
-        this(queueSize, true, null);
+    public AbstractJobContext(String jobBatchName, int queueSize) {
+        this(jobBatchName, queueSize, true, null);
     }
 
-    public AbstractJobContext(int queueSize, Predicate<JobResult<T>> jobCompletionPredict) {
-        this(queueSize, true, jobCompletionPredict);
+    public AbstractJobContext(String jobBatchName, int queueSize, Predicate<JobResult<T>> jobCompletionPredict) {
+        this(jobBatchName, queueSize, true, jobCompletionPredict);
     }
 
     /**
@@ -79,9 +78,9 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
      * @param fair
      * @param jobCompletionPredict
      */
-    public AbstractJobContext(int queueSize, boolean fair, Predicate<JobResult<T>> jobCompletionPredict) {
+    public AbstractJobContext(String jobBatchName, int queueSize, boolean fair, Predicate<JobResult<T>> jobCompletionPredict) {
         this.jobCompletionPredict = jobCompletionPredict;
-        threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + new Date(), queueSize);
+        threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + jobBatchName + new Date(), queueSize);
         myExecutorCompletionService = MyExecutorCompletionService.getInstance(
                 CompletionServiceProperty
                         .<JobResult<T>>builder()
@@ -119,20 +118,42 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
     abstract void submitReport(JobResult<T> tJobResult);
 
     @Override
-    public boolean pollJob(int count) throws InterruptedException, ExecutionException {
-        if (count <= 0) {
+    public boolean pollJob(int jobTotal) throws InterruptedException, ExecutionException, TimeoutException {
+        return pollJob(jobTotal, Integer.MAX_VALUE, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public boolean pollJob(int jobTotal, long timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+        if (jobTotal <= 0) {
             return true;
         }
-        int i = 0;
-        while (i != count) {
+        //已处理完成的任务大小
+        int jobIndex = 0;
+        //当前线程轮询次数
+        int pollCount = 0;
+        //当前线程轮询时间
+        long currentJobStartTime = System.currentTimeMillis();
+        //任务是否已经处理完
+        while (jobIndex != jobTotal) {
+            if (pollCount > 0) {
+                long gapMilliSeconds = timeUnit.convert(System.currentTimeMillis() - currentJobStartTime, TimeUnit.MILLISECONDS);
+                if (gapMilliSeconds > timeout) {
+                    throw new TimeoutException("任务获取超时");
+                }
+            } else {
+                pollCount++;
+            }
             Future<JobResult<T>> result;
             while ((result = myExecutorCompletionService.poll()) != null) {
                 try {
                     submitReport(result.get());
-                } catch (ExecutionException e) {
+                } catch (ExecutionException | InterruptedException e) {
+                    //任务被强制终止
                     throw e;
                 } finally {
-                    i++;
+                    jobIndex++;
+                    pollCount = 0;
+                    currentJobStartTime = System.currentTimeMillis();
                 }
             }
         }

@@ -112,3 +112,5 @@ buildNumber.properties
 .idea
 out
 gen
+
+distributed-lock

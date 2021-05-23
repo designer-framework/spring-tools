@@ -3,6 +3,7 @@ package org.designer.thread.callable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.designer.thread.entity.JobInfo;
 import org.designer.thread.entity.JobResult;
 
 import java.time.LocalDateTime;
@@ -18,9 +19,8 @@ import java.util.concurrent.Callable;
 @Accessors(chain = true)
 public class JobCallableImpl<T> implements Callable<JobResult<T>> {
 
-    private final String jobId;
+    private final JobInfo jobInfo;
     private final Callable<JobResult<T>> task;
-    private final String batchId;
     /**
      * 准备调用多线程执行任务的时间
      */
@@ -30,10 +30,9 @@ public class JobCallableImpl<T> implements Callable<JobResult<T>> {
      */
     private LocalDateTime createTime;
 
-    public JobCallableImpl(Callable<JobResult<T>> task, String jobId, String batchId) {
+    public JobCallableImpl(Callable<JobResult<T>> task, JobInfo jobInfo) {
         super();
-        this.jobId = jobId;
-        this.batchId = batchId;
+        this.jobInfo = jobInfo;
         this.task = task;
         createTime = LocalDateTime.now();
         startTime = LocalDateTime.now();
@@ -41,13 +40,7 @@ public class JobCallableImpl<T> implements Callable<JobResult<T>> {
 
     @Override
     public JobResult<T> call() throws Exception {
-        try {
-            return task.call();
-        } catch (Exception e) {
-            JobResult<T> tJobResult = new JobResult<>(jobId);
-            tJobResult.exception(e);
-            return tJobResult;
-        }
+        return task.call();
     }
 
 

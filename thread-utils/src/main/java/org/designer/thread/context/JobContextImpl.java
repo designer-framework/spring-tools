@@ -1,8 +1,9 @@
 package org.designer.thread.context;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.thread.callable.JobCallableImpl;
+import org.designer.handler.ExceptionHandler;
 import org.designer.thread.entity.Job;
+import org.designer.thread.entity.JobInfo;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.exception.JobExistException;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Predicate;
 
@@ -36,10 +36,13 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
      */
     protected final JobReportContext<JobStatus, JobResult<T>> jobReportContext;
 
+    private final ExceptionHandler<JobInfo, JobResult<T>> exceptionHandler;
+
     // private final Object lock = new Object();
 
-    public JobContextImpl(int queueSize, Predicate<JobResult<T>> processorCompletionPredict) {
-        super(queueSize, processorCompletionPredict);
+    public JobContextImpl(String jobBatchName, int queueSize, Predicate<JobResult<T>> processorCompletionPredict, ExceptionHandler<JobInfo, JobResult<T>> exceptionHandler) {
+        super(jobBatchName, queueSize, processorCompletionPredict);
+        this.exceptionHandler = exceptionHandler;
         jobReportContext = new JobReportContextImpl<>();
         waitProcessJobs = new ConcurrentHashMap<>();
     }
@@ -47,12 +50,13 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
     @Override
     public void submitJob(Job<T> job) {
         if (waitProcessJobs.containsKey(job.getJobId())) {
-            JobResult<T> tJobResult = new JobResult<>(job.getJobId());
+            JobResult<T> tJobResult = new JobResult<>(job);
             tJobResult.exception(new JobExistException(job.getJobId() + ", 任务名字重复"));
             jobReportContext.submitReport(tJobResult);
         } else {
-            Future<JobResult<T>> jobResultFuture = myExecutorCompletionService.submit(copyJobToTask(job));
-            waitProcessJobs.put(job.getJobId(), new JobResult<>(jobResultFuture, job.getJobId()));
+            //Future<JobResult<T>> jobResultFuture = myExecutorCompletionService.submit(copyJobToTask(job));
+            myExecutorCompletionService.submit(copyJobToTask(job));
+            waitProcessJobs.put(job.getJobId(), new JobResult<>(job));
         }
     }
 
@@ -64,12 +68,12 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
      */
     private Callable<JobResult<T>> copyJobToTask(Job<T> job) {
         Lock readLock = readWriteLock.readLock();
-        Callable<JobResult<T>> callable = () -> {
+        return () -> {
             readLock.lock();
             try {
                 //已经被挂起则直接返回
                 if (interrupt.getInterrupt()) {
-                    JobResult<T> objectJobResult = new JobResult<>(job.getJobId());
+                    JobResult<T> objectJobResult = new JobResult<>(job);
                     objectJobResult.exception(new InterruptedException("任务" + job.getJobId() + "已被中断!"));
                     return objectJobResult;
                 } else {
@@ -93,16 +97,12 @@ public class JobContextImpl<T> extends AbstractJobContext<T> {
                     }
                     return jobResult;
                 }
+            } catch (Exception e) {
+                return exceptionHandler.handler(e, job);
             } finally {
                 readLock.unlock();
             }
         };
-        return new JobCallableImpl<>(
-                callable
-                , job.getJobId()
-                , job.getBatchId()
-        )
-                .setCreateTime(job.getCreateTime());
     }
 
     @Override

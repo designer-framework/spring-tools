@@ -5,7 +5,6 @@ import lombok.experimental.SuperBuilder;
 import org.designer.thread.enums.JobStatus;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.Future;
 
 /**
  * @description:
@@ -15,6 +14,8 @@ import java.util.concurrent.Future;
 @Getter
 @SuperBuilder
 public class JobResult<T> {
+
+    private final String jobBatchId;
 
     private final String jobId;
 
@@ -30,17 +31,29 @@ public class JobResult<T> {
 
     private T result;
 
-    private Future<JobResult<T>> resultFuture;
+    /*private Future<JobResult<T>> resultFuture;
 
-    public JobResult(Future<JobResult<T>> task, String jobId) {
-        this(jobId);
+    public JobResult(Future<JobResult<T>> task, String jobBatchId, String jobId) {
+        this(jobBatchId, jobId);
         resultFuture = task;
+    }*/
+
+    /**
+     * , JobStatus jobStatus
+     *
+     * @param jobInfo
+     */
+    public JobResult(JobInfo jobInfo) {
+        jobBatchId = jobInfo.getBatchId();
+        jobId = jobInfo.getJobId();
+        startTime = jobInfo.getCreateTime();
     }
 
-    public JobResult(String jobId) {
+    public JobResult(String jobBatchId, String jobId) {
+        this.jobBatchId = jobBatchId;
         this.jobId = jobId;
-        jobStatus = JobStatus.SUBMIT;
         startTime = LocalDateTime.now();
+        jobStatus = JobStatus.SUBMIT;
     }
 
     public void setResult(T result) {
@@ -75,17 +88,4 @@ public class JobResult<T> {
         jobStatus = JobStatus.EXCEPTION;
     }
 
-    @Override
-    public String toString() {
-        return "JobResult{" +
-                "jobName='" + jobId + '\'' +
-                ", startTime=" + startTime +
-                ", endTime=" + endTime +
-                ", jobStatus=" + jobStatus +
-                ", errorMsg='" + errorMsg + '\'' +
-                ", e=" + exception +
-                ", result=" + result +
-                ", resultFuture=" + resultFuture +
-                '}';
-    }
 }

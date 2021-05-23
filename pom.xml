@@ -41,6 +41,7 @@
         <module>spring-xml-support</module>
         <module>web-application-demo</module>
         <module>spring-web-codec</module>
+        <module>distributed-lock</module>
     </modules>
 
     <dependencies>

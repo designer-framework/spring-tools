@@ -1,6 +1,7 @@
 package org.designer.thread.service;
 
 import lombok.extern.log4j.Log4j2;
+import org.designer.handler.impl.JobCallableExceptionHandler;
 import org.designer.thread.context.JobContext;
 import org.designer.thread.context.JobContextImpl;
 import org.designer.thread.entity.Job;
@@ -19,10 +20,14 @@ import java.util.function.Predicate;
 @Log4j2
 public class JobBatchService<T> {
 
-    private final int queueSize = 3000;
+    private final int queueSize;
 
-    private final ReportContextContainer<T> reportContextContainer = new ReportContextContainer<>();
+    private final ReportContextContainer<T> reportContextContainer;
 
+    public JobBatchService() {
+        queueSize = 3000;
+        reportContextContainer = new ReportContextContainer<>();
+    }
 
     /**
      * 批量投放任务集合, 直接返回结果, 也可以直接放入异步线程池.
@@ -47,7 +52,8 @@ public class JobBatchService<T> {
      * @throws Exception
      */
     public JobContext<JobStatus, T> batchProcess(List<Job<T>> jobs, String batchName, int queueSize, Predicate<JobResult<T>> processorCompletionPredict) throws Exception {
-        try (JobContext<JobStatus, T> testContext = new JobContextImpl<>(queueSize, processorCompletionPredict)) {
+        //JobCallableExceptionHandler用来决定是将异常包装成结果返回还是直接抛出异常将程序中断
+        try (JobContext<JobStatus, T> testContext = new JobContextImpl<>(batchName, queueSize, processorCompletionPredict, new JobCallableExceptionHandler<>())) {
             reportContextContainer.put(batchName, testContext);
             try {
                 jobs.forEach(testContext::submitJob);

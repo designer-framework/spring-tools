@@ -23,7 +23,7 @@ public class JobReportContextImpl<T> implements JobReportContext<JobStatus, JobR
     @Override
     public void submitReport(JobResult<T> tJobResult) {
         if (tJobResult.getJobStatus() == JobStatus.SUBMIT) {
-            JobResult<T> result = new JobResult<>(tJobResult.getJobId());
+            JobResult<T> result = new JobResult<>(tJobResult.getJobBatchId(), tJobResult.getJobId());
             result.exception(new JobStatusException(tJobResult.getJobId()));
             jobReport.add(result.getJobStatus(), tJobResult);
         } else {

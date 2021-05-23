@@ -2,6 +2,7 @@ package org.designer;
 
 import lombok.extern.log4j.Log4j2;
 import org.designer.thread.context.JobContext;
+import org.designer.thread.entity.DefaultJobInfo;
 import org.designer.thread.entity.Job;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
@@ -19,8 +20,8 @@ import java.util.*;
 public class Main {
 
     public static Job<String> newTask(String jobId, String batchId) {
-        return new Job<>((baseInterrupt) -> {
-            JobResult<String> objectJobResult = new JobResult<>(jobId + UUID.randomUUID());
+        return new DefaultJobInfo<>((baseInterrupt) -> {
+            JobResult<String> objectJobResult = new JobResult<>(batchId, jobId);
             int random = new Random().nextInt(1000);
             Thread.sleep(new Random().nextInt(2) * 1000);
             if (random % 101 == 0) {
@@ -53,7 +54,7 @@ public class Main {
     public void batchProcessIfAnyJobCompletion() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
-        List<Job<String>> threads = ForEachUtil.listThread(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
+        List<Job<String>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
         JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(
                 threads
                 , "BATCH-" + UUID.randomUUID()
@@ -72,8 +73,8 @@ public class Main {
     public void batchProcess() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
-        List<Job<String>> threads = ForEachUtil.listThread(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
-        JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(threads, "BATCH-" + UUID.randomUUID());
+        List<Job<String>> jobs = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
+        JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(jobs, "BATCH-" + UUID.randomUUID());
         print(jobContext);
     }
 
