@@ -37,7 +37,7 @@ public abstract class AbstractInterruptImpl implements Interrupt {
     }
 
     /**
-     * 避免死锁, 先解读锁, 再加写锁
+     * 避免死锁, 先解读锁, 再加写锁. 因为在执行该方法之前调用了读锁.
      * 为遵循开闭原则及易用性, 所以不暴露读写锁给用户
      *
      * @param runnable
