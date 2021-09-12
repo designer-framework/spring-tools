@@ -1,14 +1,13 @@
 package org.designer.thread.context;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.thread.MyExecutorCompletionService;
-import org.designer.thread.MyThreadPoolExecutor;
 import org.designer.thread.entity.JobResult;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.interrupt.Interrupt;
 import org.designer.thread.interrupt.InterruptImpl;
-import org.designer.thread.property.CompletionServiceProperty;
 import org.designer.thread.utils.UnsafeUtil;
+import org.designer.thread.utils.builder.ExecutorCompletionServiceBuilder;
+import org.designer.thread.utils.builder.ThreadPoolExecutorBuilder;
 import sun.misc.Unsafe;
 
 import java.util.Date;
@@ -40,11 +39,11 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
     /**
      *
      */
-    protected final MyThreadPoolExecutor threadPoolExecutor;
+    protected final ThreadPoolExecutor threadPoolExecutor;
     /**
      *
      */
-    protected final MyExecutorCompletionService<JobResult<T>> myExecutorCompletionService;
+    protected final ExecutorCompletionService<JobResult<T>> myExecutorCompletionService;
     /**
      *
      */
@@ -80,13 +79,11 @@ public abstract class AbstractJobContext<T> implements JobContext<JobStatus, T> 
      */
     public AbstractJobContext(String jobBatchName, int queueSize, boolean fair, Predicate<JobResult<T>> jobCompletionPredict) {
         this.jobCompletionPredict = jobCompletionPredict;
-        threadPoolExecutor = MyThreadPoolExecutor.getInstance("JOB - " + jobBatchName + new Date(), queueSize);
-        myExecutorCompletionService = MyExecutorCompletionService.getInstance(
-                CompletionServiceProperty
-                        .<JobResult<T>>builder()
-                        .threadPoolExecutor(threadPoolExecutor)
-                        .queue(new ArrayBlockingQueue<>(queueSize)).build()
-        );
+        threadPoolExecutor = new ThreadPoolExecutorBuilder().build("JOB - " + jobBatchName + new Date(), queueSize);
+        myExecutorCompletionService = new ExecutorCompletionServiceBuilder<JobResult<T>>()
+                .setThreadPoolExecutor(threadPoolExecutor)
+                .setQueue(new ArrayBlockingQueue<>(queueSize))
+                .build();
         readWriteLock = new ReentrantReadWriteLock(fair);
         interrupt = new InterruptImpl(readWriteLock, this::isCompletion);
     }
