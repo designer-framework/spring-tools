@@ -1,7 +1,8 @@
 package org.designer;
 
 import lombok.SneakyThrows;
-import org.designer.thread.entity.Job;
+import org.designer.thread.job.Job;
+import org.designer.thread.job.JobResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +32,9 @@ public class ForEachUtil {
     }
 
     @SneakyThrows
-    public static List<Job<String>> listJob(int count, Supplier<Job<String>> supplierCallable) {
+    public static List<Job<JobResult<String>>> listJob(int count, Supplier<Job<JobResult<String>>> supplierCallable) {
         CountDownLatch countDownLatch = new CountDownLatch(count);
-        List<Job<String>> threads = new ArrayList<>();
+        List<Job<JobResult<String>>> threads = new ArrayList<>();
         IntStream.range(0, count)
                 .forEach(value -> {
                     threads.add(supplierCallable.get());

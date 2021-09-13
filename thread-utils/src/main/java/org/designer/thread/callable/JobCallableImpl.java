@@ -3,8 +3,8 @@ package org.designer.thread.callable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.designer.thread.entity.JobInfo;
-import org.designer.thread.entity.JobResult;
+import org.designer.thread.job.JobInfo;
+import org.designer.thread.job.JobResult;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Callable;

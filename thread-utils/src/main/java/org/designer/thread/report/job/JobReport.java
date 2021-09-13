@@ -8,7 +8,7 @@ import java.util.Map;
  * @author: Designer
  * @date : 2021/4/21 1:05
  */
-public interface Report<K, V> {
+public interface JobReport<K, V> {
 
     /**
      * 通过任务的key获取任务总数量
@@ -27,6 +27,6 @@ public interface Report<K, V> {
      *
      * @return
      */
-    public int size();
+    int size();
 
 }

@@ -1,7 +1,6 @@
-package org.designer.thread.entity;
+package org.designer.thread.job;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 import org.designer.thread.enums.JobStatus;
 
 import java.time.LocalDateTime;
@@ -12,12 +11,7 @@ import java.time.LocalDateTime;
  * @date : 2021/4/20 20:30
  */
 @Getter
-@SuperBuilder
 public class JobResult<T> {
-
-    private final String jobBatchId;
-
-    private final String jobId;
 
     private final LocalDateTime startTime;
 
@@ -31,27 +25,7 @@ public class JobResult<T> {
 
     private T result;
 
-    /*private Future<JobResult<T>> resultFuture;
-
-    public JobResult(Future<JobResult<T>> task, String jobBatchId, String jobId) {
-        this(jobBatchId, jobId);
-        resultFuture = task;
-    }*/
-
-    /**
-     * , JobStatus jobStatus
-     *
-     * @param jobInfo
-     */
-    public JobResult(JobInfo jobInfo) {
-        jobBatchId = jobInfo.getBatchId();
-        jobId = jobInfo.getJobId();
-        startTime = jobInfo.getCreateTime();
-    }
-
-    public JobResult(String jobBatchId, String jobId) {
-        this.jobBatchId = jobBatchId;
-        this.jobId = jobId;
+    public JobResult() {
         startTime = LocalDateTime.now();
         jobStatus = JobStatus.SUBMIT;
     }

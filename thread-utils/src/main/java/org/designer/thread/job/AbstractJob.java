@@ -1,7 +1,8 @@
-package org.designer.thread.entity;
+package org.designer.thread.job;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.designer.thread.callable.JobCallable;
 import org.designer.thread.enums.JobStatus;
 
 import java.time.LocalDateTime;
@@ -13,24 +14,23 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Setter
-public class AbstractJobInfo {
-
-    private final String batchId;
-
+public abstract class AbstractJob<R> implements JobItem<R> {
     private final String jobId;
-
+    private final String jobName;
     private final LocalDateTime createTime;
-
+    private final JobCallable<JobResult<R>> task;
     private LocalDateTime endTime;
-
     private JobStatus jobStatus;
 
-    private long runtime;
-
-    public AbstractJobInfo(String batchId, String jobId, LocalDateTime createTime) {
-        this.batchId = batchId;
+    public AbstractJob(
+            JobCallable<JobResult<R>> task
+            , String jobId
+            , String jobName
+    ) {
+        this.jobName = jobName;
+        this.task = task;
         this.jobId = jobId;
-        this.createTime = createTime;
+        createTime = LocalDateTime.now();
     }
 
     public void end() {

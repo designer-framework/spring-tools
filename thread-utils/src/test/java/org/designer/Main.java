@@ -1,15 +1,23 @@
 package org.designer;
 
 import lombok.extern.log4j.Log4j2;
-import org.designer.thread.context.JobContext;
-import org.designer.thread.entity.DefaultJobInfo;
-import org.designer.thread.entity.Job;
-import org.designer.thread.entity.JobResult;
+import org.designer.thread.batch.BatchInfo;
+import org.designer.thread.batch.DefaultBatchJob;
 import org.designer.thread.enums.JobStatus;
+import org.designer.thread.job.DefaultJob;
+import org.designer.thread.job.Job;
+import org.designer.thread.job.JobResult;
+import org.designer.thread.report.job.JobReportContext;
 import org.designer.thread.service.JobBatchService;
+import org.designer.thread.utils.builder.ExecutorCompletionServiceBuilder;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
 
 /**
  * @description:
@@ -19,9 +27,9 @@ import java.util.*;
 @Log4j2
 public class Main {
 
-    public static Job<String> newTask(String jobId, String batchId) {
-        return new DefaultJobInfo<>((baseInterrupt) -> {
-            JobResult<String> objectJobResult = new JobResult<>(batchId, jobId);
+    public static Job<JobResult<String>> newTask(String jobId, String batchId) {
+        return new DefaultJob<>((baseInterrupt) -> {
+            JobResult<String> objectJobResult = new JobResult<>();
             int random = new Random().nextInt(1000);
             Thread.sleep(new Random().nextInt(2) * 1000);
             if (random % 101 == 0) {
@@ -45,6 +53,13 @@ public class Main {
         }, jobId, batchId);
     }
 
+    @Test
+    public void main() throws Exception {
+        ArrayBlockingQueue<Future<Integer>> arrayBlockingQueue = new ArrayBlockingQueue<>(100);
+        ExecutorCompletionService<Integer> build = new ExecutorCompletionServiceBuilder<Integer>()
+                .build(arrayBlockingQueue, 10000);
+    }
+
     /**
      * 任意一个线程的处理结果满足条件, 其他线程直接退出
      *
@@ -54,14 +69,22 @@ public class Main {
     public void batchProcessIfAnyJobCompletion() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
-        List<Job<String>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
-        JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(
-                threads
-                , "BATCH-" + UUID.randomUUID()
+        List<Job<JobResult<String>>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
+        BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), uuid, threads);
+        JobReportContext<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
+                defaultBatchJob
                 , 3000
-                , stringJobResult -> stringJobResult.getJobStatus() == JobStatus.COMPLETION
+                , stringJobResult -> {
+                    try {
+                        Thread.sleep(2);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return stringJobResult.getJobStatus() == JobStatus.COMPLETION;
+                }
+                , true
         );
-        print(jobContext);
+        print(jobReportContext);
     }
 
     /**
@@ -72,14 +95,23 @@ public class Main {
     @Test
     public void batchProcess() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
-        String uuid = UUID.randomUUID().toString();
-        List<Job<String>> jobs = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
-        JobContext<JobStatus, String> jobContext = stringJobBatchService.batchProcess(jobs, "BATCH-" + UUID.randomUUID());
-        print(jobContext);
+        String batchId = UUID.randomUUID().toString();
+        List<Job<JobResult<String>>> jobs = ForEachUtil.listJob(2000, () -> {
+            return new DefaultJob<>(baseInterrupt -> {
+                return new JobResult<>();
+            }, UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        });
+        BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), batchId, jobs);
+        JobReportContext<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
+                defaultBatchJob
+                , 200
+                , stringJobResult -> stringJobResult.getJobStatus() == JobStatus.COMPLETION
+        );
+        print(jobReportContext);
     }
 
-    public void print(JobContext<JobStatus, String> jobContext) {
-        log.warn("异常:" + jobContext.getExceptionInfo());
+    public void print(JobReportContext<JobStatus, JobResult<String>> jobReportContext) {
+      /*  log.warn("异常:" + jobContext.getExceptionInfo());
         log.warn("成功率:" + jobContext.getPercentage(JobStatus.COMPLETION));
         log.warn("错误率:" + jobContext.getPercentage(JobStatus.ERROR));
         log.warn("异常率:" + jobContext.getPercentage(JobStatus.EXCEPTION));
@@ -90,7 +122,7 @@ public class Main {
         Set<Map.Entry<String, List<JobResult<String>>>> entries = exceptionInfo.entrySet();
         entries.forEach(stringListEntry -> {
             log.warn(stringListEntry.getKey() + " : " + stringListEntry.getValue().size());
-        });
+        });*/
     }
 
 }

@@ -1,4 +1,4 @@
-package org.designer.thread.entity;
+package org.designer.thread.job;
 
 import java.time.LocalDateTime;
 
@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
  */
 public interface JobInfo {
 
-    String getBatchId();
-
     String getJobId();
+
+    String getJobName();
 
     LocalDateTime getCreateTime();
 

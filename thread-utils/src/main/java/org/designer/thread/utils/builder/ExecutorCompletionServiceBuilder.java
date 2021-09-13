@@ -2,13 +2,9 @@ package org.designer.thread.utils.builder;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
-import org.springframework.util.Assert;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.UUID;
+import java.util.concurrent.*;
 
 /**
  * @description:
@@ -17,17 +13,27 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Getter
 @Setter
-@Accessors(chain = true)
 public class ExecutorCompletionServiceBuilder<V> {
 
     private ThreadPoolExecutor threadPoolExecutor;
 
-    private BlockingQueue<Future<V>> queue;
+    public ExecutorCompletionService<V> build(int queueCapacity) {
+        if (threadPoolExecutor == null) {
+            threadPoolExecutor = new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), queueCapacity);
+        }
+        return new ExecutorCompletionService<>(threadPoolExecutor, new ArrayBlockingQueue<>(queueCapacity));
+    }
 
-    public ExecutorCompletionService<V> build() {
-        Assert.notNull(threadPoolExecutor, "threadPoolExecutor");
-        Assert.notNull(queue, "queue");
-        return new ExecutorCompletionService<>(threadPoolExecutor, queue);
+    /**
+     * @param completionQueue         存放处理结果的队列
+     * @param threadPoolQueueCapacity 线程池队列大小
+     * @return
+     */
+    public ExecutorCompletionService<V> build(BlockingQueue<Future<V>> completionQueue, int threadPoolQueueCapacity) {
+        if (threadPoolExecutor == null) {
+            threadPoolExecutor = new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), threadPoolQueueCapacity);
+        }
+        return new ExecutorCompletionService<>(threadPoolExecutor, completionQueue);
     }
 
 }

@@ -1,7 +1,7 @@
 package org.designer.thread.report.container;
 
-import org.designer.thread.context.JobContext;
-import org.designer.thread.enums.JobStatus;
+import org.designer.thread.context.JobProcessorContext;
+import org.designer.thread.job.JobResult;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author: Designer
  * @date : 2021/4/21 13:17
  */
-public class ReportContextContainer<T> extends ConcurrentHashMap<String, JobContext<JobStatus, T>> {
+public class ReportContextContainer<T> extends ConcurrentHashMap<String, JobProcessorContext<JobResult<T>>> {
 
     private static final long serialVersionUID = 2364358113666210945L;
 

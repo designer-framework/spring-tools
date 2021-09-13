@@ -1,4 +1,4 @@
-package org.designer.thread.entity;
+package org.designer.thread.job;
 
 import org.designer.thread.callable.JobCallable;
 
@@ -7,8 +7,8 @@ import org.designer.thread.callable.JobCallable;
  * @author: Designer
  * @date : 2021/5/24 0:31
  */
-public interface BaseJob<T> {
+public interface Job<R> extends JobInfo {
 
-    JobCallable<JobResult<T>> getTask();
+    JobCallable<R> getTask();
 
 }
