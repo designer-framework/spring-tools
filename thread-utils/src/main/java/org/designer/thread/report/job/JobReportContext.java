@@ -34,6 +34,4 @@ public interface JobReportContext<K, V> extends JobReport<K, V> {
 
     boolean pollJob(int count, long timeout, TimeUnit timeUnit) throws Exception;
 
-    void waitResult(boolean waitResult) throws InterruptedException;
-
 }

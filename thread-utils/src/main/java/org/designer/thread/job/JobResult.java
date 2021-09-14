@@ -30,9 +30,10 @@ public class JobResult<T> {
         jobStatus = JobStatus.SUBMIT;
     }
 
-    public void setResult(T result) {
+    public JobResult<T> completion(T result) {
         jobStatus = JobStatus.COMPLETION;
         this.result = result;
+        return this;
     }
 
     public boolean hasException() {
@@ -47,19 +48,16 @@ public class JobResult<T> {
         endTime = LocalDateTime.now();
     }
 
-    public final void failed(String errorMsg) {
+    public final JobResult<T> error(String errorMsg) {
         this.errorMsg = errorMsg;
         jobStatus = JobStatus.ERROR;
+        return this;
     }
 
-    public final void error(String errorMsg) {
-        this.errorMsg = errorMsg;
-        jobStatus = JobStatus.ERROR;
-    }
-
-    public final void exception(Exception e) {
+    public final JobResult<T> exception(Exception e) {
         exception = e;
         jobStatus = JobStatus.EXCEPTION;
+        return this;
     }
 
 }

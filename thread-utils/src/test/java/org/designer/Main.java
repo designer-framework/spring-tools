@@ -7,17 +7,13 @@ import org.designer.thread.enums.JobStatus;
 import org.designer.thread.job.DefaultJob;
 import org.designer.thread.job.Job;
 import org.designer.thread.job.JobResult;
-import org.designer.thread.report.job.JobReportContext;
-import org.designer.thread.service.JobBatchService;
-import org.designer.thread.utils.builder.ExecutorCompletionServiceBuilder;
+import org.designer.thread.report.job.JobReport;
+import org.designer.thread.service.impl.JobBatchService;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
 
 /**
  * @description:
@@ -47,17 +43,10 @@ public class Main {
             } else if (random % 2 == 1) {
                 objectJobResult.error(String.valueOf(random));
             } else {
-                objectJobResult.setResult(String.valueOf(random));
+                objectJobResult.completion(String.valueOf(random));
             }
             return objectJobResult;
         }, jobId, batchId);
-    }
-
-    @Test
-    public void main() throws Exception {
-        ArrayBlockingQueue<Future<Integer>> arrayBlockingQueue = new ArrayBlockingQueue<>(100);
-        ExecutorCompletionService<Integer> build = new ExecutorCompletionServiceBuilder<Integer>()
-                .build(arrayBlockingQueue, 10000);
     }
 
     /**
@@ -71,7 +60,7 @@ public class Main {
         String uuid = UUID.randomUUID().toString();
         List<Job<JobResult<String>>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
         BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), uuid, threads);
-        JobReportContext<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
+        JobReport<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
                 defaultBatchJob
                 , 3000
                 , stringJobResult -> {
@@ -82,7 +71,7 @@ public class Main {
                     }
                     return stringJobResult.getJobStatus() == JobStatus.COMPLETION;
                 }
-                , true
+                , false
         );
         print(jobReportContext);
     }
@@ -102,15 +91,15 @@ public class Main {
             }, UUID.randomUUID().toString(), UUID.randomUUID().toString());
         });
         BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), batchId, jobs);
-        JobReportContext<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
+        JobReport<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
                 defaultBatchJob
-                , 200
                 , stringJobResult -> stringJobResult.getJobStatus() == JobStatus.COMPLETION
         );
         print(jobReportContext);
     }
 
-    public void print(JobReportContext<JobStatus, JobResult<String>> jobReportContext) {
+    public void print(JobReport<JobStatus, JobResult<String>> jobReportContext) {
+        log.info(jobReportContext);
       /*  log.warn("异常:" + jobContext.getExceptionInfo());
         log.warn("成功率:" + jobContext.getPercentage(JobStatus.COMPLETION));
         log.warn("错误率:" + jobContext.getPercentage(JobStatus.ERROR));

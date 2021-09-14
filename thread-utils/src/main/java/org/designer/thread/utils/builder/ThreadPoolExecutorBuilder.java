@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @description:
@@ -52,25 +54,25 @@ public class ThreadPoolExecutorBuilder {
      * 缓冲队列
      */
     private Queue<Runnable> workQueue;
+
     /**
-     * 线程创建工厂
+     * 线程拒绝策略
      */
-    private ThreadFactory threadFactory;
-    private RejectedExecutionHandler handler;
+    private RejectedExecutionHandler rejectedHandler;
 
     private boolean fair;
 
     public ThreadPoolExecutor build(String threadName, int queueCapacity) {
-        Assert.notNull(threadName, "threadName");
-        Assert.isTrue(queueCapacity != 0, "queueCapacity");
+        Assert.notNull(threadName, "线程名字不能为空");
+        Assert.isTrue(queueCapacity != 0, "缓冲队列大小不能为空");
         if (coreSize == 0) {
-            coreSize = CORE_SIZE * 2;
+            coreSize = CORE_SIZE;
         }
         if (keepAlive == 0) {
             keepAlive = 10000;
         }
         if (maxSize == 0) {
-            maxSize = (int) (CORE_SIZE * 2.5);
+            maxSize = CORE_SIZE * 2 + 1;
         }
         log.debug("CPU线程数:{}, 工作核心线程数: {}, 工作最大线程数: {}"
                 , CORE_SIZE
@@ -88,15 +90,7 @@ public class ThreadPoolExecutorBuilder {
                 .setNameFormat(threadName)
                 .setDaemon(daemon)
                 .build()
-                ,
-                (r, executor) -> {
-                    try {
-                        Thread.sleep(15000 + new Random().nextInt(10));
-                        executor.execute(r);
-                    } catch (Exception e) {
-                        log.error("线程疲惫" + executor.toString(), e);
-                    }
-                }
+                , rejectedHandler == null ? new ThreadPoolExecutor.CallerRunsPolicy() : rejectedHandler
         );
     }
 

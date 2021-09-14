@@ -31,4 +31,11 @@ public class DefaultBatchJob<T> implements BatchInfo<T> {
         this.jobs = jobs;
     }
 
+    @Override
+    public String toString() {
+        return "DefaultBatchJob{" +
+                "批次id:'" + id + '\'' +
+                ", 批次名:'" + name +
+                '}';
+    }
 }

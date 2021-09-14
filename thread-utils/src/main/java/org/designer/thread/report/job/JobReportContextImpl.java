@@ -2,16 +2,21 @@ package org.designer.thread.report.job;
 
 import lombok.extern.log4j.Log4j2;
 import org.designer.thread.batch.BatchInfo;
+import org.designer.thread.context.JobContext;
 import org.designer.thread.context.JobProcessorContext;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.exception.JobStatusException;
 import org.designer.thread.job.JobResult;
+import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @description: 任务处理报告上下文
@@ -21,68 +26,61 @@ import java.util.concurrent.*;
 @Log4j2
 public class JobReportContextImpl<T> extends Thread implements JobReportContext<JobStatus, JobResult<T>> {
 
+    public final CountDownLatch resultLock = new CountDownLatch(1);
+    /**
+     * 任务结果
+     */
     private final JobReportMap<JobStatus, JobResult<T>> jobReport = new JobReportMap<>();
-
+    /**
+     * 批任务信息
+     */
     private final BatchInfo<JobResult<T>> batchInfo;
-
-    private final BlockingQueue<Future<JobResult<T>>> completionData;
-    private final JobProcessorContext<JobResult<T>> jobProcessorContext;
-    private final CountDownLatch lock = new CountDownLatch(1);
+    /**
+     * 拉取结果的超时时间, 秒为单位
+     */
+    private final int pollJobTimeOut;
+    /**
+     * 存放完成后的任务
+     */
+    private final BlockingQueue<Future<JobResult<T>>> completionQueue;
+    /**
+     * 任务上下文
+     */
+    private final JobContext<JobResult<T>> jobContext;
 
     public JobReportContextImpl(
             BatchInfo<JobResult<T>> batchInfo
-            , JobProcessorContext<JobResult<T>> jobProcessorContext
-            , BlockingQueue<Future<JobResult<T>>> completionData
+            , JobProcessorContext<JobResult<T>> jobContext
+            , BlockingQueue<Future<JobResult<T>>> completionQueue
     ) {
         this.batchInfo = batchInfo;
-        this.jobProcessorContext = jobProcessorContext;
-        this.completionData = completionData;
-    }
-
-    @Override
-    public void waitResult(boolean waitResult) throws InterruptedException {
-        if (waitResult) {
-            lock.await();
-        }
+        this.jobContext = jobContext;
+        this.completionQueue = completionQueue;
+        pollJobTimeOut = 2;
     }
 
     @Override
     public boolean pollJob(int jobTotal) throws Exception {
-        return pollJob(jobTotal, Integer.MAX_VALUE, TimeUnit.SECONDS);
+        return pollJob(jobTotal, pollJobTimeOut, TimeUnit.SECONDS);
     }
 
     @Override
     public boolean pollJob(int jobTotal, long timeout, TimeUnit timeUnit) throws Exception {
-        if (jobTotal <= 0) {
-            return true;
-        }
         //已处理完成的任务大小
         int jobIndex = 0;
-        //当前线程轮询次数
-        int pollCount = 0;
-        //当前线程轮询时间
-        long currentJobStartTime = System.currentTimeMillis();
         //任务是否已经处理完
-        while (jobIndex != jobTotal) {
-            if (pollCount > 0) {
-                long gapMilliSeconds = timeUnit.convert(System.currentTimeMillis() - currentJobStartTime, TimeUnit.MILLISECONDS);
-                if (gapMilliSeconds > timeout) {
-                    throw new TimeoutException("任务获取超时");
-                }
-            } else {
-                pollCount++;
-            }
+        Assert.isTrue(jobTotal > 0, "任务数量不合法：" + jobTotal);
+        while (jobIndex < jobTotal) {
             Future<JobResult<T>> result;
-            while ((result = completionData.poll()) != null) {
+            while ((result = completionQueue.poll(timeout, TimeUnit.SECONDS)) != null) {
                 try {
                     JobResult<T> tJobResult = result.get();
                     log.debug(tJobResult);
-                } catch (InterruptedException | ExecutionException e) {
+                } catch (Exception e) {
                     log.error("tJobResult", e);
+                    jobReport.add(JobStatus.EXCEPTION, new JobResult<T>().exception(e));
                 } finally {
                     jobIndex++;
-                    pollCount = 0;
-                    currentJobStartTime = System.currentTimeMillis();
                 }
             }
         }
@@ -104,16 +102,20 @@ public class JobReportContextImpl<T> extends Thread implements JobReportContext<
     public void run() {
         boolean success;
         try {
-            success = pollJob(jobProcessorContext.getJobQueueSize());
+            if (jobContext.getWaitProcessJobSize() <= 0) {
+                log.error("没有要处理的任务!" + batchInfo);
+                return;
+            }
+            success = pollJob(jobContext.getWaitProcessJobSize());
             if (success) {
-                log.debug(batchInfo.getId() + "任务完成");
+                log.debug("任务完成" + batchInfo);
             } else {
-                throw new RuntimeException(batchInfo.getId() + "任务失败");
+                throw new RuntimeException("任务失败" + batchInfo);
             }
         } catch (Exception e) {
             log.error("拉取结果失败", e);
         } finally {
-            lock.countDown();
+            resultLock.countDown();
         }
     }
 
@@ -146,10 +148,16 @@ public class JobReportContextImpl<T> extends Thread implements JobReportContext<
     }
 
     @Override
+    public JobReport<JobStatus, JobResult<T>> waitResult() throws InterruptedException {
+        resultLock.await();
+        return this;
+    }
+
+    @Override
     public void submitReport(JobResult<T> tJobResult) {
         if (tJobResult.getJobStatus() == JobStatus.SUBMIT) {
             JobResult<T> result = new JobResult<>();
-            result.exception(new JobStatusException("xxx"));
+            result.exception(new JobStatusException("错误的任务状态: " + JobStatus.SUBMIT));
             jobReport.add(result.getJobStatus(), tJobResult);
         } else {
             jobReport.add(tJobResult.getJobStatus(), tJobResult);

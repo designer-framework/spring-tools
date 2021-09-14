@@ -4,7 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @description:
@@ -15,13 +18,19 @@ import java.util.concurrent.*;
 @Setter
 public class ExecutorCompletionServiceBuilder<V> {
 
-    private ThreadPoolExecutor threadPoolExecutor;
-
-    public ExecutorCompletionService<V> build(int queueCapacity) {
-        if (threadPoolExecutor == null) {
-            threadPoolExecutor = new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), queueCapacity);
-        }
-        return new ExecutorCompletionService<>(threadPoolExecutor, new ArrayBlockingQueue<>(queueCapacity));
+    /**
+     * @param completionQueue         存放处理结果的队列
+     * @param threadPoolQueueCapacity 线程池队列大小
+     * @return
+     */
+    public ExecutorCompletionService<V> build(
+            BlockingQueue<Future<V>> completionQueue
+            , int threadPoolQueueCapacity
+    ) {
+        return new ExecutorCompletionService<>(
+                new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), threadPoolQueueCapacity)
+                , completionQueue
+        );
     }
 
     /**
@@ -29,7 +38,11 @@ public class ExecutorCompletionServiceBuilder<V> {
      * @param threadPoolQueueCapacity 线程池队列大小
      * @return
      */
-    public ExecutorCompletionService<V> build(BlockingQueue<Future<V>> completionQueue, int threadPoolQueueCapacity) {
+    public ExecutorCompletionService<V> build(
+            ThreadPoolExecutor threadPoolExecutor
+            , BlockingQueue<Future<V>> completionQueue
+            , int threadPoolQueueCapacity
+    ) {
         if (threadPoolExecutor == null) {
             threadPoolExecutor = new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), threadPoolQueueCapacity);
         }

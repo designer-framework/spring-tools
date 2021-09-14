@@ -1,4 +1,4 @@
-package org.designer.thread.service;
+package org.designer.thread.service.impl;
 
 import lombok.extern.log4j.Log4j2;
 import org.designer.handler.impl.JobCallableExceptionHandler;
@@ -7,10 +7,10 @@ import org.designer.thread.context.JobProcessorContext;
 import org.designer.thread.context.JobProcessorContextImpl;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.job.JobResult;
-import org.designer.thread.report.job.JobReportContext;
+import org.designer.thread.report.job.JobReport;
+import org.designer.thread.service.JobBatch;
 import org.designer.thread.utils.builder.ThreadPoolExecutorBuilder;
 
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Predicate;
 
 /**
@@ -19,7 +19,21 @@ import java.util.function.Predicate;
  * @date : 2021/4/21 1:42
  */
 @Log4j2
-public class JobBatchService<T> {
+public class JobBatchService<T> implements JobBatch<T> {
+
+    @Override
+    public void batchProcess(
+            BatchInfo<JobResult<T>> batchInfo
+    ) throws Exception {
+        batchProcess(batchInfo, null);
+    }
+
+    public JobReport<JobStatus, JobResult<T>> batchProcess(
+            BatchInfo<JobResult<T>> batchInfo
+            , Predicate<JobResult<T>> processorCompletionPredict
+    ) throws Exception {
+        return batchProcess(batchInfo, 300000, processorCompletionPredict, false);
+    }
 
     /**
      * 批量投放任务集合
@@ -30,33 +44,23 @@ public class JobBatchService<T> {
      * @return
      * @throws Exception
      */
-    public JobReportContext<JobStatus, JobResult<T>> batchProcess(
-            BatchInfo<JobResult<T>> batchInfo
-            , int queueSize
-            , Predicate<JobResult<T>> processorCompletionPredict
-    ) throws Exception {
-        return batchProcess(batchInfo, queueSize, processorCompletionPredict, false);
-    }
-
-    public JobReportContext<JobStatus, JobResult<T>> batchProcess(
+    public JobReport<JobStatus, JobResult<T>> batchProcess(
             BatchInfo<JobResult<T>> batchInfo
             , int queueSize
             , Predicate<JobResult<T>> processorCompletionPredict
             , boolean waitResult
     ) throws Exception {
-        //JobCallableExceptionHandler用来决定是将异常包装成结果返回还是直接抛出异常将程序中断
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutorBuilder().build(batchInfo.getId(), queueSize);
         try {
             JobProcessorContext<JobResult<T>> context = new JobProcessorContextImpl<>(
                     batchInfo
-                    , threadPoolExecutor
+                    , new ThreadPoolExecutorBuilder().build(batchInfo.getId(), queueSize)
                     , processorCompletionPredict
+                    //JobCallableExceptionHandler用来决定是将异常包装成结果返回还是直接抛出异常将程序中断
                     , new JobCallableExceptionHandler<>()
+                    , waitResult
             );
             context.start();
-            JobReportContext<JobStatus, JobResult<T>> jobReportContext = context.getJobReportContext();
-            jobReportContext.waitResult(waitResult);
-            return jobReportContext;
+            return context.getJobReportContext();
         } catch (Exception e) {
             throw e;
         }

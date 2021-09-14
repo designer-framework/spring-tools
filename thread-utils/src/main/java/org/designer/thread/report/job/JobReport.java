@@ -29,4 +29,6 @@ public interface JobReport<K, V> {
      */
     int size();
 
+    JobReport<K, V> waitResult() throws InterruptedException;
+
 }

@@ -5,6 +5,8 @@ import org.designer.thread.interrupt.Interrupt;
 import org.designer.thread.interrupt.InterruptImpl;
 import org.designer.thread.job.JobResult;
 import org.designer.thread.utils.UnsafeUtil;
+import org.designer.thread.utils.builder.ExecutorCompletionServiceBuilder;
+import org.springframework.util.Assert;
 import sun.misc.Unsafe;
 
 import java.util.concurrent.*;
@@ -28,7 +30,7 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
         try {
             stateOffset = UNSAFE.objectFieldOffset(AbstractJobProcessorContext.class.getDeclaredField("state"));
         } catch (Exception e) {
-            throw new Error(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -51,7 +53,10 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
     /**
      * 处理结果
      */
-    protected final BlockingQueue<Future<JobResult<T>>> completionData;
+    protected final BlockingQueue<Future<JobResult<T>>> completionQueue;
+    /**
+     *
+     */
     private final ThreadPoolExecutor threadPoolExecutor;
     /**
      * 线程池状态
@@ -60,19 +65,20 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
 
     /**
      * @param threadPoolExecutor
-     * @param fair
      * @param jobCompletionPredict
      */
     public AbstractJobProcessorContext(
             ThreadPoolExecutor threadPoolExecutor
-            , boolean fair
             , Predicate<JobResult<T>> jobCompletionPredict
+            , int queueCapacity
     ) {
+        Assert.notNull(threadPoolExecutor, "线程池不能为空");
         this.jobCompletionPredict = jobCompletionPredict;
         this.threadPoolExecutor = threadPoolExecutor;
-        completionData = new ArrayBlockingQueue<>(300000);
-        executorCompletionService = new ExecutorCompletionService<>(threadPoolExecutor, completionData);
-        readWriteLock = new ReentrantReadWriteLock(fair);
+        completionQueue = new ArrayBlockingQueue<>(queueCapacity);
+        executorCompletionService = new ExecutorCompletionServiceBuilder<JobResult<T>>()
+                .build(threadPoolExecutor, completionQueue, queueCapacity);
+        readWriteLock = new ReentrantReadWriteLock(false);
         interrupt = new InterruptImpl(readWriteLock, this::isCompletion);
 
     }
@@ -101,13 +107,9 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
         return state;
     }
 
-
     @Override
     public void close() throws Exception {
         threadPoolExecutor.shutdown();
     }
 
-    public BlockingQueue<Future<JobResult<T>>> getCompletionData() {
-        return completionData;
-    }
 }
