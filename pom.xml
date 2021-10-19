@@ -9,21 +9,14 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.9.RELEASE</version>
-    </parent>
-
     <name>spring-tools</name>
     <url>https://www.designer.com</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <spring-version>2.0.9.RELEASE</spring-version>
-        <spring-data-version>Kay-SR9</spring-data-version>
-        <lombok.version>1.18.16</lombok.version>
+        <!--<spring-version>2.0.9.RELEASE</spring-version>-->
+        <spring-version>2.3.10.RELEASE</spring-version>
         <vavr.version>1.0.0-alpha-3</vavr.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <guava.version>18.0</guava.version>
@@ -32,6 +25,9 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+
+        <redisson.starter.version>3.16.2</redisson.starter.version>
     </properties>
 
     <modules>
@@ -41,6 +37,7 @@
         <module>spring-xml-support</module>
         <module>web-application-demo</module>
         <module>spring-web-codec</module>
+        <module>spring-lock</module>
         <!--<module>distributed-lock</module>-->
     </modules>
 
@@ -76,26 +73,14 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-parent</artifactId>
+                <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.data</groupId>
-                <artifactId>spring-data-releasetrain</artifactId>
-                <version>${spring-data-version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -114,6 +99,13 @@
                         <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- redisson-starter -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.starter.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

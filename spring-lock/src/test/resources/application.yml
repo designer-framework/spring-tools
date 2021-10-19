@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: spring-lock
+  lock:
+    type: redisson
+  cache:
+    cache-names: simple
+    type: redis
+      #cache-names-ext:
+      #cacheables:
+    #与上面的cache-names一一对应, 每个业务都必须有一个cache-names, 否则会有序列化问题
+    #value的class类型, 必须与业务返回class类型必须一致
+    #如果不设置默认返回Map
+    #simple: com.jhb.cache.test.entity.Obj
+    redis:
+      #缓存过期时间
+      time-to-live: 60S
+  redis:
+    host: 192.168.10.115
+    port: 6379
+    password: 123456
+    database: 0
+    timeout: 3000
+    redisson:
+      config: |
+        singleServerConfig:
+         address: redis://${spring.redis.host}:${spring.redis.port}
+         subscriptionConnectionMinimumIdleSize: 1
+         subscriptionConnectionPoolSize: 50
+         connectionMinimumIdleSize: 8
+         connectionPoolSize: 64
+         database: 10
+         dnsMonitoringInterval: 5000
+         idleConnectionTimeout: 10000
+         connectTimeout: 10000
+         timeout: 3000
+         retryAttempts: 3
+         retryInterval: 1500
+         password: 123456
+         subscriptionsPerConnection: 5
+         clientName: null
+         pingConnectionInterval: 0
+         keepAlive: false
+         tcpNoDelay: false
+         nameMapper: !<org.redisson.api.DefaultNameMapper> {}
+        codec: !<org.redisson.codec.JsonJacksonCodec> {}
+        threads: 16
+        nettyThreads: 32
+        transportMode: "NIO"
