@@ -11,8 +11,8 @@ import org.designer.thread.callable.JobCallable;
 @Getter
 public class DefaultJob<T> extends AbstractJob<T> {
 
-    public DefaultJob(JobCallable<JobResult<T>> task, String jobId, String jobName) {
-        super(task, jobId, jobName);
+    public DefaultJob(JobCallable<JobResult<T>> task, String jobId) {
+        super(task, jobId);
     }
 
 

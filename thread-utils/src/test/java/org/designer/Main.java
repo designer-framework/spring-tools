@@ -3,11 +3,11 @@ package org.designer;
 import lombok.extern.log4j.Log4j2;
 import org.designer.thread.batch.BatchInfo;
 import org.designer.thread.batch.DefaultBatchJob;
+import org.designer.thread.context.report.job.JobReport;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.job.DefaultJob;
 import org.designer.thread.job.Job;
 import org.designer.thread.job.JobResult;
-import org.designer.thread.report.job.JobReport;
 import org.designer.thread.service.impl.JobBatchService;
 import org.junit.Test;
 
@@ -23,30 +23,28 @@ import java.util.UUID;
 @Log4j2
 public class Main {
 
-    public static Job<JobResult<String>> newTask(String jobId, String batchId) {
+    public static Job<JobResult<String>> newTask(String jobId) {
         return new DefaultJob<>((baseInterrupt) -> {
-            JobResult<String> objectJobResult = new JobResult<>();
             int random = new Random().nextInt(1000);
             Thread.sleep(new Random().nextInt(2) * 1000);
             if (random % 101 == 0) {
                 //该方法是支持读写锁的关键
-                baseInterrupt.lockAndRun(() -> {
+                return baseInterrupt.lockAndRun(() -> {
                     try {
                         log.error("锁定资源: " + random);
                         Thread.sleep(1500);
                         baseInterrupt.interrupt();
-                        objectJobResult.exception(new RuntimeException());
+                        return JobResult.completion("result");
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        return JobResult.exception(e);
                     }
                 });
             } else if (random % 2 == 1) {
-                objectJobResult.error(String.valueOf(random));
+                return JobResult.failed(String.valueOf(random), String.valueOf(random));
             } else {
-                objectJobResult.completion(String.valueOf(random));
+                return JobResult.completion(String.valueOf(random));
             }
-            return objectJobResult;
-        }, jobId, batchId);
+        }, jobId);
     }
 
     /**
@@ -58,7 +56,7 @@ public class Main {
     public void batchProcessIfAnyJobCompletion() throws Exception {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String uuid = UUID.randomUUID().toString();
-        List<Job<JobResult<String>>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString(), uuid));
+        List<Job<JobResult<String>>> threads = ForEachUtil.listJob(2000, () -> newTask(UUID.randomUUID().toString()));
         BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), uuid, threads);
         JobReport<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(
                 defaultBatchJob
@@ -86,9 +84,10 @@ public class Main {
         JobBatchService<String> stringJobBatchService = new JobBatchService<>();
         String batchId = UUID.randomUUID().toString();
         List<Job<JobResult<String>>> jobs = ForEachUtil.listJob(2000, () -> {
-            return new DefaultJob<>(baseInterrupt -> {
-                return new JobResult<>();
-            }, UUID.randomUUID().toString(), UUID.randomUUID().toString());
+            return new DefaultJob<>(
+                    baseInterrupt -> JobResult.init()
+                    , UUID.randomUUID().toString()
+            );
         });
         BatchInfo<JobResult<String>> defaultBatchJob = new DefaultBatchJob<>(UUID.randomUUID().toString(), batchId, jobs);
         JobReport<JobStatus, JobResult<String>> jobReportContext = stringJobBatchService.batchProcess(

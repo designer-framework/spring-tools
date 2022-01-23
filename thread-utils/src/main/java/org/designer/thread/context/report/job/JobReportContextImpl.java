@@ -1,11 +1,10 @@
-package org.designer.thread.report.job;
+package org.designer.thread.context.report.job;
 
 import lombok.extern.log4j.Log4j2;
 import org.designer.thread.batch.BatchInfo;
 import org.designer.thread.context.JobContext;
 import org.designer.thread.context.JobProcessorContext;
 import org.designer.thread.enums.JobStatus;
-import org.designer.thread.exception.JobStatusException;
 import org.designer.thread.job.JobResult;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
@@ -78,7 +77,7 @@ public class JobReportContextImpl<T> extends Thread implements JobReportContext<
                     log.debug(tJobResult);
                 } catch (Exception e) {
                     log.error("tJobResult", e);
-                    jobReport.add(JobStatus.EXCEPTION, new JobResult<T>().exception(e));
+                    jobReport.add(JobStatus.EXCEPTION, JobResult.exception(e));
                 } finally {
                     jobIndex++;
                 }
@@ -155,14 +154,7 @@ public class JobReportContextImpl<T> extends Thread implements JobReportContext<
 
     @Override
     public void submitReport(JobResult<T> tJobResult) {
-        if (tJobResult.getJobStatus() == JobStatus.SUBMIT) {
-            JobResult<T> result = new JobResult<>();
-            result.exception(new JobStatusException("错误的任务状态: " + JobStatus.SUBMIT));
-            jobReport.add(result.getJobStatus(), tJobResult);
-        } else {
-            jobReport.add(tJobResult.getJobStatus(), tJobResult);
-        }
-        tJobResult.end();
+        jobReport.add(tJobResult.getJobStatus(), tJobResult);
         log.debug(tJobResult.toString());
     }
 

@@ -2,6 +2,7 @@ package org.designer.lock.service;
 
 import org.designer.lock.annotation.Key;
 import org.designer.lock.annotation.Lock;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TestLockService {
 
+    @Cacheable(key = "#p0.byteValue()")
     @Lock(key = {@Key(name = "#p0")})
     public void lock(Integer p0) {
 

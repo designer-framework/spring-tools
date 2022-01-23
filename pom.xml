@@ -34,10 +34,12 @@
         <module>common</module>
         <module>spring-auto-factory</module>
         <module>thread-utils</module>
+        <module>thread-utils-test</module>
         <module>spring-xml-support</module>
         <module>web-application-demo</module>
         <module>spring-web-codec</module>
         <module>spring-lock</module>
+        <module>spring-web-codec</module>
         <!--<module>distributed-lock</module>-->
     </modules>
 

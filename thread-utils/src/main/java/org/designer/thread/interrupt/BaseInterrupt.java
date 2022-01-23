@@ -26,7 +26,7 @@ public interface BaseInterrupt {
      *
      * @param runnable
      */
-    void lockAndRun(CallRunnable runnable) throws Exception;
+    <V> V lockAndRun(CallRunnable<V> runnable) throws Exception;
 
 
 }

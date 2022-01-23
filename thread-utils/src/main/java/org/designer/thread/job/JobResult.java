@@ -3,8 +3,6 @@ package org.designer.thread.job;
 import lombok.Getter;
 import org.designer.thread.enums.JobStatus;
 
-import java.time.LocalDateTime;
-
 /**
  * @description:
  * @author: Designer
@@ -13,50 +11,74 @@ import java.time.LocalDateTime;
 @Getter
 public class JobResult<T> {
 
-    private final LocalDateTime startTime;
-
-    private LocalDateTime endTime;
+    private long processTime;
 
     private JobStatus jobStatus;
 
-    private String errorMsg;
-
     private Exception exception;
+
+    private String failedMessage;
 
     private T result;
 
-    public JobResult() {
-        startTime = LocalDateTime.now();
+    private JobResult() {
         jobStatus = JobStatus.SUBMIT;
     }
 
-    public JobResult<T> completion(T result) {
-        jobStatus = JobStatus.COMPLETION;
-        this.result = result;
-        return this;
+    public static <T> JobResult<T> completion(T result) {
+        JobResult<T> jobResult = new JobResult<>();
+        jobResult.jobStatus = JobStatus.COMPLETION;
+        jobResult.result = result;
+        return jobResult;
     }
 
-    public boolean hasException() {
+    /**
+     * 任务失败
+     *
+     * @param result
+     * @return
+     */
+    public static <T> JobResult<T> failed(T result, String failedMessage) {
+        JobResult<T> jobResult = new JobResult<>();
+        jobResult.jobStatus = JobStatus.FAILED;
+        jobResult.result = result;
+        jobResult.failedMessage = failedMessage;
+        return jobResult;
+    }
+
+    /**
+     * 任务发生异常
+     *
+     * @param e
+     * @return
+     */
+    public static <T> JobResult<T> exception(Exception e) {
+        JobResult<T> jobResult = new JobResult<>();
+        jobResult.jobStatus = JobStatus.EXCEPTION;
+        jobResult.exception = e;
+        return jobResult;
+    }
+
+    public static <T> JobResult<T> init() {
+        JobResult<T> jobResult = new JobResult<>();
+        jobResult.jobStatus = JobStatus.SUBMIT;
+        return jobResult;
+    }
+
+    public boolean isException() {
         return jobStatus == JobStatus.EXCEPTION;
     }
 
-    public boolean hasError() {
-        return jobStatus == JobStatus.ERROR;
+    public boolean isFailed() {
+        return jobStatus == JobStatus.FAILED;
     }
 
-    public void end() {
-        endTime = LocalDateTime.now();
+    public boolean isCompletion() {
+        return jobStatus == JobStatus.COMPLETION;
     }
 
-    public final JobResult<T> error(String errorMsg) {
-        this.errorMsg = errorMsg;
-        jobStatus = JobStatus.ERROR;
-        return this;
-    }
-
-    public final JobResult<T> exception(Exception e) {
-        exception = e;
-        jobStatus = JobStatus.EXCEPTION;
+    public JobResult<T> processTime(long processTime) {
+        this.processTime = processTime;
         return this;
     }
 

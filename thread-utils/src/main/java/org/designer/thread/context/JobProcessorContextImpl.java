@@ -4,13 +4,13 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.designer.handler.ExceptionHandler;
 import org.designer.thread.batch.BatchInfo;
+import org.designer.thread.context.report.job.JobReportContext;
+import org.designer.thread.context.report.job.JobReportContextImpl;
 import org.designer.thread.enums.JobStatus;
 import org.designer.thread.exception.JobExistException;
 import org.designer.thread.job.Job;
 import org.designer.thread.job.JobInfo;
 import org.designer.thread.job.JobResult;
-import org.designer.thread.report.job.JobReportContext;
-import org.designer.thread.report.job.JobReportContextImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -44,11 +44,11 @@ public class JobProcessorContextImpl<T> extends AbstractJobProcessorContext<T> {
     public JobProcessorContextImpl(
             BatchInfo<JobResult<T>> batchInfo
             , ThreadPoolExecutor threadPoolExecutor
-            , Predicate<JobResult<T>> processorCompletionPredict
+            , Predicate<JobResult<T>> jobInterruptPredict
             , ExceptionHandler<JobInfo, JobResult<T>> exceptionHandler
             , boolean waitResult
     ) {
-        super(threadPoolExecutor, processorCompletionPredict, 300000);
+        super(threadPoolExecutor, jobInterruptPredict, 300000);
         this.batchInfo = batchInfo;
         this.waitResult = waitResult;
         this.exceptionHandler = exceptionHandler;
@@ -71,12 +71,14 @@ public class JobProcessorContextImpl<T> extends AbstractJobProcessorContext<T> {
 
     @Override
     public void submitJob(Job<JobResult<T>> job) {
-        if (waitProcessJobs.containsKey(job.getJobId())) {
-            JobResult<T> tJobResult = new JobResult<>();
-            tJobResult.exception(new JobExistException(job.getJobId() + ", 任务名字重复"));
-            //将待处理任务保存至map中
-        } else {
-            waitProcessJobs.put(job.getJobId(), executorCompletionService.submit(copyJobToTask(job)));
+        //将待处理任务保存至waitProcessJobs map中
+        Future<JobResult<T>> jobResultFuture = waitProcessJobs.putIfAbsent(
+                job.getJobId()
+                , executorCompletionService.submit(copyJobToTask(job))
+        );
+        //存在重复的任务
+        if (jobResultFuture == null) {
+            jobReportContext.submitReport(JobResult.exception(new JobExistException(job.getJobId() + ", 任务名字重复")));
         }
     }
 
@@ -93,25 +95,23 @@ public class JobProcessorContextImpl<T> extends AbstractJobProcessorContext<T> {
             try {
                 //任务已经被挂起则直接保存处理结果
                 if (interrupt.getInterrupt()) {
-                    JobResult<T> jobResult = new JobResult<>();
-                    jobResult.exception(new InterruptedException("因第" + batchInfo.getId() + "批次任务已完成, 任务" + job.getJobId() + "被跳过!"));
-                    return jobResult;
+                    return JobResult.exception(
+                            new InterruptedException("因[" + batchInfo.getId() + "]批次任务已完成, 任务" + job.getJobId() + "被跳过!")
+                    );
                     //任务未被挂起则正常执行
                 } else {
                     JobResult<T> jobResult = job.getTask().call(interrupt);
-                    //任务执行结果是否为已完成
-                    if (jobCompletionPredict != null && jobResult.getJobStatus() == JobStatus.COMPLETION) {
+                    //通过jobResult来决定是否挂起任务
+                    if (jobInterruptPredict != null) {
                         completion();
                         //已有状态为Completion的任务, 是否继续执行剩下的任务(可能有的业务需求只要有任意一个任务被完成,则跳过其他所有待执行的任务,并直接返回状态为Completion的任务结果)
-                        if (jobCompletionPredict.test(jobResult)) {
-                            //任务已完成, 修改全局任务状态为已挂起
-                            //挂起成功
+                        if (jobInterruptPredict.test(jobResult)) {
+                            //修改全局任务状态修改为已挂起
                             if (interrupt.interrupt()) {
-                                log.info("任务处理完毕, 批处理ID: {}, 任务ID: {}", batchInfo.getId(), job.getJobId());
-                                //任务已完成, 但挂起失败(多线程并发的情况下,可能会进入此代码块,因此处的代码块没必要也并未保证它的并发安全)
-                                //挂起失败
+                                log.info("任务挂起成功, 批处理ID: {}, 任务ID: {}", batchInfo.getId(), job.getJobId());
+                                //多线程情况下,可能会多个线程在完成任务后进入此代码块, 导致此现象原因是此处的代码块并未保证它的并发安全, 暂时认为没必要
                             } else {
-                                log.warn("任务已完成, 但在此之前已有任务被完成! 批处理ID: {}, 当前任务ID: {} !", batchInfo.getId(), job.getJobId());
+                                log.warn("重复挂起任务, 批处理ID: {}, 当前任务ID: {} !", batchInfo.getId(), job.getJobId());
                             }
                         }
                     }

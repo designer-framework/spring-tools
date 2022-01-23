@@ -18,13 +18,11 @@ public class JobCallableExceptionHandler<J> implements ExceptionHandler<JobInfo,
 
     @Override
     public JobResult<J> handler(Exception e, JobInfo requestInfo) {
-        JobResult<J> jobResult = new JobResult<>();
-        if (jobResult.getException() instanceof BaseJobException) {
-            jobResult.exception(e);
+        if (e instanceof BaseJobException) {
+            return JobResult.exception(e);
         } else {
-            jobResult.exception(new UnknownJobException(requestInfo.getJobId(), e));
+            return JobResult.exception(new UnknownJobException(requestInfo.getJobId(), e));
         }
-        return jobResult;
     }
 
 }

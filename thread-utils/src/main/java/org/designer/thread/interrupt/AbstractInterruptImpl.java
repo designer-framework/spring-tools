@@ -44,13 +44,14 @@ public abstract class AbstractInterruptImpl implements Interrupt {
      * @throws Exception
      */
     @Override
-    public void lockAndRun(CallRunnable runnable) throws Exception {
+    public <V> V lockAndRun(CallRunnable<V> runnable) throws Exception {
         readWriteLock.readLock().unlock();
         readWriteLock.writeLock().lock();
         try {
             log.debug("锁定资源");
-            runnable.run();
+            V call = runnable.call();
             log.debug("资源获取完成");
+            return call;
         } finally {
             readWriteLock.writeLock().unlock();
             readWriteLock.readLock().lock();

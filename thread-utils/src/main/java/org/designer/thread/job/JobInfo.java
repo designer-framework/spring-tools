@@ -1,7 +1,5 @@
 package org.designer.thread.job;
 
-import java.time.LocalDateTime;
-
 /**
  * @description:
  * @author: Designer
@@ -10,9 +8,5 @@ import java.time.LocalDateTime;
 public interface JobInfo {
 
     String getJobId();
-
-    String getJobName();
-
-    LocalDateTime getCreateTime();
 
 }

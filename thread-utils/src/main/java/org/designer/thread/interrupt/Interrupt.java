@@ -31,7 +31,7 @@ public interface Interrupt extends BaseInterrupt {
      *
      * @return
      */
-    public boolean isCompletion();
+    boolean isCompletion();
 
 
 }

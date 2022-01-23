@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- 缺省配置（用于开发环境）。其他环境需要在VM参数中指定，如下：
+         测试：-Dlog.level.console=warn -Dlog.level.console=trace
+         生产：-Dlog.level.console=warn -Dlog.level.console=info-->
+        <Property name="log.level.console">debug</Property>
+        <Property name="log.path">./log</Property>
+        <Property name="log.history.path">./log/history</Property>
+        <Property name="project.name">${project.name}</Property>
+        <Property name="log.pattern">
+            <!--%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %logger{2} [%F:%L]->[%M] : %msg%xEx%n-->
+            %d{HH:mm:ss} %-5level [%t] %logger{2} [%F:%L]->[%M] : %msg%xEx%n
+        </Property>
+        <Property name="log.charset">UTF8</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${log.pattern}"/>
+        </Console>
+
+        <RollingFile name="APP_LOG"
+                     immediateFlush="true" fileName="${log.path}/app.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-payment-request-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="FATAL" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="8 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+        <RollingFile name="TRACE_APPENDER"
+                     immediateFlush="true" fileName="${log.path}/trace.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-trace-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="DEBUG" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+        <RollingFile name="DEBUG_APPENDER"
+                     immediateFlush="true" fileName="${log.path}/debug.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-debug-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="INFO" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+        <RollingFile name="INFO_APPENDER"
+                     immediateFlush="true" fileName="${log.path}/info.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-info-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+        <RollingFile name="WARN_APPENDER"
+                     immediateFlush="true" fileName="${log.path}/warn.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-warn-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+        <RollingFile name="ERROR_APPENDER"
+                     immediateFlush="true" fileName="${log.path}/error.log"
+                     filePattern="${log.history.path}/$${date:yyyy-MM}/$${date:dd}/%i-error-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout>
+                <charset>${log.charset}</charset>
+                <pattern>${log.pattern}</pattern>
+            </PatternLayout>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy min="1" max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- 配置日志的根节点 -->
+        <root level="debug">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="DEBUG_APPENDER"/>
+            <appender-ref ref="INFO_APPENDER"/>
+            <appender-ref ref="WARN_APPENDER"/>
+            <appender-ref ref="ERROR_APPENDER"/>
+        </root>
+
+        <!-- 第三方日志系统 -->
+        <logger name="org.springframework.core" level="debug"/>
+        <logger name="org.springframework.beans" level="debug"/>
+        <logger name="org.springframework.appContext" level="debug"/>
+        <logger name="org.springframework.web" level="debug"/>
+        <logger name="org.springboot.sample" level="debug"/>
+        <logger name="org.apache.http" level="debug"/>
+        <logger name="org.apache.ibatis" level="debug"/>
+        <logger name="org.mybatis" level="debug"/>
+
+        <logger name="org.designer" level="TRACE" additivity="false" includeLocation="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="TRACE_APPENDER"/>
+            <appender-ref ref="DEBUG_APPENDER"/>
+            <appender-ref ref="INFO_APPENDER"/>
+            <appender-ref ref="WARN_APPENDER"/>
+            <appender-ref ref="ERROR_APPENDER"/>
+        </logger>
+
+        <logger name="APP" level="DEBUG" additivity="false" includeLocation="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="APP_LOG"/>
+        </logger>
+
+    </Loggers>
+
+</Configuration>

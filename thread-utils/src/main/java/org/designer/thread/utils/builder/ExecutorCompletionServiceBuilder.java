@@ -44,7 +44,8 @@ public class ExecutorCompletionServiceBuilder<V> {
             , int threadPoolQueueCapacity
     ) {
         if (threadPoolExecutor == null) {
-            threadPoolExecutor = new ThreadPoolExecutorBuilder().build(UUID.randomUUID().toString(), threadPoolQueueCapacity);
+            threadPoolExecutor = new ThreadPoolExecutorBuilder()
+                    .build(UUID.randomUUID().toString(), threadPoolQueueCapacity);
         }
         return new ExecutorCompletionService<>(threadPoolExecutor, completionQueue);
     }

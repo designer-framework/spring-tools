@@ -9,5 +9,5 @@ public enum JobStatus {
     SUBMIT,
     COMPLETION,
     EXCEPTION,
-    ERROR;
+    FAILED;
 }

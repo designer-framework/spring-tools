@@ -39,19 +39,19 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
      */
     protected final ExecutorCompletionService<JobResult<T>> executorCompletionService;
     /**
-     *
+     * 当完成任务可以调用interrupt方法, 终止后续任务
      */
     protected final Interrupt interrupt;
     /**
-     * 资源锁
+     * 资源独占锁
      */
     protected final ReadWriteLock readWriteLock;
     /**
      * 判断为true时, 表示任务已完成, 其它新来的线程会直接中断
      */
-    protected final Predicate<JobResult<T>> jobCompletionPredict;
+    protected final Predicate<JobResult<T>> jobInterruptPredict;
     /**
-     * 处理结果
+     * 存放线程处理结果
      */
     protected final BlockingQueue<Future<JobResult<T>>> completionQueue;
     /**
@@ -59,21 +59,21 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
      */
     private final ThreadPoolExecutor threadPoolExecutor;
     /**
-     * 线程池状态
+     * 线程池状态, 大于0则表示任务已完成
      */
     private volatile int state = 0;
 
     /**
      * @param threadPoolExecutor
-     * @param jobCompletionPredict
+     * @param jobInterruptPredict
      */
     public AbstractJobProcessorContext(
             ThreadPoolExecutor threadPoolExecutor
-            , Predicate<JobResult<T>> jobCompletionPredict
+            , Predicate<JobResult<T>> jobInterruptPredict
             , int queueCapacity
     ) {
         Assert.notNull(threadPoolExecutor, "线程池不能为空");
-        this.jobCompletionPredict = jobCompletionPredict;
+        this.jobInterruptPredict = jobInterruptPredict;
         this.threadPoolExecutor = threadPoolExecutor;
         completionQueue = new ArrayBlockingQueue<>(queueCapacity);
         executorCompletionService = new ExecutorCompletionServiceBuilder<JobResult<T>>()
@@ -88,11 +88,8 @@ public abstract class AbstractJobProcessorContext<T> extends Thread implements A
     }
 
     /**
-     * 在多个线程涌入的时候, 第一个线程在未完成CAS操作时, 第二个线程完成了CAS操作,
-     * 此时第一个线程持有的的值不是最新的, 那么CAS操作会失败。
-     * 如果不使用临时变量来获取当前state的最新值, 将会陷入死循环。
-     * 通过 jstack 命令可以看到本方法一直在运行, 其它线程一直处于WAIT状态, 通过DEBUG反复测试, 较容易复现问题
-     * 使用临时变量的目的: tmp及tmp+1代码块在入方法栈时并不是原子操作, 如果有一个更改state的操作执行在两代码块之间, 那么CAS操作就会失败
+     * 在多个线程涌入的时候, 第一个线程在未完成CAS操作时, 第二个线程比第一个线程先完成CAS操作,
+     * 那么第一个CAS操作会失败, 并会重试
      */
     protected void completion() {
         int tmp = state;

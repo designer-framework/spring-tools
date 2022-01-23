@@ -16,17 +16,14 @@ import org.designer.codec.utils.info.EncryptInfo;
 import org.designer.codec.utils.info.VerifyInfo;
 import org.designer.codec.utils.utils.Encryption;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 @Data
 @Log4j2
 @Accessors(chain = true)
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ControllerCodecApplication.class})
+/*@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ControllerCodecApplication.class})*/
 public class CodecUtilsApplicationTests {
 
     public static final String signType = SignTypeEnum.BASE64.name();

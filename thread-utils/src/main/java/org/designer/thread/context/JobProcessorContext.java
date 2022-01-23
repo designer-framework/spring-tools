@@ -1,7 +1,7 @@
 package org.designer.thread.context;
 
+import org.designer.thread.context.report.job.JobReportContext;
 import org.designer.thread.enums.JobStatus;
-import org.designer.thread.report.job.JobReportContext;
 
 /**
  * @description:
